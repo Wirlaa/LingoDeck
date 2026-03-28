@@ -1,0 +1,52 @@
+services:
+
+  python-service:
+    build: .
+    container_name: lingo-python-service
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://lingo:lingo@python-db:5432/lingo_python
+      DATABASE_ECHO: "false"
+      SERVICE_SECRET: ${SERVICE_SECRET:-changeme}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      DEBUG: "true"
+    depends_on:
+      python-db:
+        condition: service_healthy
+    networks:
+      - lingo-python-net
+    volumes:
+      # Mount local code into the container so changes reflect without rebuild
+      # Remove this in production
+      - .:/app
+    restart: unless-stopped
+
+  python-db:
+    image: postgres:16-alpine
+    container_name: lingo-python-db
+    environment:
+      POSTGRES_USER: lingo
+      POSTGRES_PASSWORD: lingo
+      POSTGRES_DB: lingo_python
+    ports:
+      # Expose DB port so you can connect with a GUI like TablePlus or DBeaver
+      - "5433:5432"
+    volumes:
+      # Persist DB data between container restarts
+      - python-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lingo -d lingo_python"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - lingo-python-net
+    restart: unless-stopped
+
+volumes:
+  python-db-data:
+
+networks:
+  lingo-python-net:
+    driver: bridge
