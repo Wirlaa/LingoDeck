@@ -4,8 +4,9 @@
  */
 
 const express = require('express');
-const { routeCors } = require('../../middleware/cors');
+const { routeCors } = require('../middleware/cors');
 const router = express.Router();
+const userController = require('../controllers/userController');
 
 // GET /api/hello -> plain text, CORS activated
 router.get('/hello', routeCors, (req, res) => {
@@ -21,6 +22,10 @@ router.get('/status', (req, res) => {
 router.post('/echo', (req, res) => {
 	res.json({ youSent: req.body });
 });
+
+router.get('/users/:id', userController.getUser);
+
+router.post('/users', userController.createUser);
 
 module.exports = router;
 
