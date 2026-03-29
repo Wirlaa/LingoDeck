@@ -1,0 +1,30 @@
+services:
+  db:
+    image: postgres:17.4
+    container_name: postgres_db
+    restart: always
+
+    environment:
+      TZ: Europe/Helsinki
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: projectdb
+
+    ports:
+      - "5433:5432"   # required since backend runs on host for now
+
+    volumes:
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./db_data:/var/lib/postgresql/data
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d projectdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+    networks:
+      - cloud_project
+
+networks:
+  cloud_project:

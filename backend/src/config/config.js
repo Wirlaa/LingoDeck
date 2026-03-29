@@ -6,10 +6,19 @@ dotenv.config({ override: true });
 const config = {
 	port: process.env.PORT || 3000,
 	nodeEnv: process.env.NODE_ENV || 'development',
+	db: {
+		host: process.env.DB_HOST || 'localhost',
+		port: Number(process.env.DB_PORT) || 5432,
+		user: process.env.DB_USER || 'user',
+		password: process.env.DB_PASSWORD || 'password',
+		name: process.env.DB_NAME || 'projectdb',
+	}
+	
 };
 
 console.log('Loaded PORT from env:', process.env.PORT);
 console.log('Config port:', config.port);
+console.log('DB config:', config.db);
 
 module.exports = config;
 
