@@ -5,7 +5,9 @@ async function printAllUsers(){
         console.log('Running Postgre database test');
         let testString = "SELECT id, username, email, first_name, last_name FROM users"
         console.log(`test SQL query: ${testString}`);
-        const result = await pool.query(testString);
+
+        // Do not use strings directly when querying to avoid SQL injection.
+        const result = await pool.query('SELECT id, username, email, first_name, last_name FROM users');
 
         console.log(JSON.stringify(result.rows, null, 2));
     }
