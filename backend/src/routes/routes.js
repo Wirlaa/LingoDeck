@@ -23,9 +23,9 @@ router.post('/echo', (req, res) => {
 	res.json({ youSent: req.body });
 });
 
-router.get('/users/:id', userController.getUser);
+router.get('/users/:id', routeCors, userController.getUser);
 
-router.post('/users', userController.createUser);
+router.post('/users', routeCors, userController.createUser);
 
 module.exports = router;
 

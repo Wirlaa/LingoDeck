@@ -14,10 +14,11 @@ async function getUser(req, res) {
   try {
     const user = await getUserById(id);
 
+    // If the user does not exist, return a status code 404 error wrapped with the customer response class.
     if (!user) {
       return res
         .status(404)
-        .json(new Response(false, 404, 'User not found', null));
+        .json(new Response(false, 404, 'User not found', null)); // Custom response sent from the backend.
     }
 
     return res

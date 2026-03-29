@@ -1,3 +1,7 @@
+/**
+ * Contains SQL queries for getting a user by id and creating a new one.
+ */
+
 const {pool} = require('../database');
 
 
@@ -11,7 +15,7 @@ async function getUserById(id){
      return rows[0];
 
     } catch(err){
-        console.error('Error getting users by id:', err.message);
+        console.error('Error getting user by id:', err.message);
         throw err;
     }
 }

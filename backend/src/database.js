@@ -1,3 +1,7 @@
+/**
+ * Simple database connection to postgre.
+ */
+
 const config = require('./config/config');
 const {Pool} = require('pg');
 
@@ -12,10 +16,5 @@ const pool = new Pool(
     }
 )
 
-async function testConnectionToDB(){
-    let test = 'SELECT NOW() AS now';
-    const result = await pool.query(test);
-    return result.rows[0].now; 
-}
 
-module.exports = {pool, testConnectionToDB};
+module.exports = {pool};

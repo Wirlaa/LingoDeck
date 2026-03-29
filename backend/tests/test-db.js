@@ -1,3 +1,5 @@
+// This is obsolete, I just left it for now. It just prints all users. 
+
 const {pool} = require('../src/database');
 
 async function printAllUsers(){

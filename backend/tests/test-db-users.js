@@ -1,4 +1,7 @@
-// A simple test file that connects to the users api.
+/**
+ * A testing file to test the connection to the database with http requests
+ * 
+ */
 
 const http = require('http');
 
@@ -99,10 +102,10 @@ async function createUserViaApi() {
 
 async function run() {
   try {
-    // 1) Fetch an existing user by a specific id (e.g. 1)
+    // Fetch an existing user by a specific id (e.g. 1)
     await getUserByIdViaApi(1);
 
-    // 2) Create a new user
+    // Create a new user
     const createdUser = await createUserViaApi();
     if (!createdUser || !createdUser.id) {
       console.log('New user was not created correctly; skipping fetch-by-id for new user.');
