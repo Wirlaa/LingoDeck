@@ -4,7 +4,6 @@ import { SplitText } from "gsap/all";
 
 const AboutSection = () => {
   useGSAP(() => {
-    <h1 className=" first-message">feel the power of your actions</h1>;
     const firstMsgSplit = SplitText.create(".first-message", {
       type: "words",
     });
