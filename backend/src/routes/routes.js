@@ -1,14 +1,14 @@
 /**
  * Routes file for app.js to use, you can add or remove routes from here and it should 
- * work fine following the structure you see here.
+ * work fine following the structure you see here. Add routeCors to any route you want CORS with.
  */
 
 const express = require('express');
-
+const { routeCors } = require('../../middleware/cors');
 const router = express.Router();
 
-// GET /api/hello -> plain text
-router.get('/hello', (req, res) => {
+// GET /api/hello -> plain text, CORS activated
+router.get('/hello', routeCors, (req, res) => {
 	res.send('Hello dude from /api/hello');
 });
 
