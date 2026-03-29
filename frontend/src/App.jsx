@@ -1,6 +1,6 @@
 import { Navbar } from "./components/Navbar";
 import gsap from "gsap";
-import { ScrollSmoother, ScrollTrigger } from "gsap/all";
+import { ScrollSmoother, ScrollTrigger, SplitText } from "gsap/all";
 import { useGSAP } from "@gsap/react";
 import FooterSection from "./sections/FooterSection";
 import { Routes, Route } from "react-router-dom";
@@ -10,7 +10,7 @@ import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 
 const App = () => {
-  gsap.registerPlugin(ScrollTrigger, ScrollSmoother);
+  gsap.registerPlugin(ScrollTrigger, ScrollSmoother, SplitText);
   useGSAP(() => {
     ScrollSmoother.create({
       smooth: 1,

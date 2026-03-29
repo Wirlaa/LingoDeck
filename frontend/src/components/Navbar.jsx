@@ -92,10 +92,11 @@ export function Navbar() {
             Lingo Deck
           </Link>
           <div className=" flex items-center gap-4">
-            <Link to="/login" className=" group">
-              <button className=" uppercase border border-white  text-white rounded-full py-1 px-7 cursor-pointer  group-hover:bg-white group-hover:text-black transition-colors duration-300 ease-in-out">
-                login
-              </button>
+            <Link
+              to="/login"
+              className="uppercase border border-white  text-white rounded-full py-1 px-7 cursor-pointer hover:bg-white hover:text-black transition-colors duration-300 ease-in-out"
+            >
+              login
             </Link>
             <button
               className="flex flex-col gap-1 cursor-pointer z-50 relative"
