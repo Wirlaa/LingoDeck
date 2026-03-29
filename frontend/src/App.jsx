@@ -3,7 +3,8 @@ import gsap from "gsap";
 import { ScrollSmoother, ScrollTrigger } from "gsap/all";
 import { useGSAP } from "@gsap/react";
 import FooterSection from "./sections/FooterSection";
-import { Route, Routes } from "react-router";
+import { Routes, Route } from "react-router-dom";
+
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
