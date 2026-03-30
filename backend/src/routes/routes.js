@@ -27,6 +27,8 @@ router.get('/users/:id', routeCors, userController.getUser);
 
 router.post('/users', routeCors, userController.createUser);
 
+router.post('/login', routeCors, userController.login);
+
 module.exports = router;
 
 

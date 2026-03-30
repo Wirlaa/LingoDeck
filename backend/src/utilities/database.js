@@ -2,7 +2,7 @@
  * Simple database connection to postgre.
  */
 
-const config = require('./config/config');
+const config = require('../config/config');
 const {Pool} = require('pg');
 
 const pool = new Pool(

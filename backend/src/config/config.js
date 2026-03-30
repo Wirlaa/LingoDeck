@@ -12,6 +12,7 @@ const config = {
 		user: process.env.DB_USER || 'user',
 		password: process.env.DB_PASSWORD || 'password',
 		name: process.env.DB_NAME || 'projectdb',
+		salt_rounds: process.env.SALT_ROUNDS || 10 // Default to 10 if no SALT_ROUNDS set
 	}
 	
 };

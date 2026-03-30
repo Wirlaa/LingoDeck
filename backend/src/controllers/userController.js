@@ -1,4 +1,5 @@
-const { getUserById, createUser: createUserModel } = require('../models/userModel');
+const { getUserById, createUser: createUserModel, getUserByEmail } = require('../models/userModel');
+const { comparePassword } = require('../utilities/password');
 const Response = require('../utilities/response');
 
 // Path: GET /api/users/:id
@@ -34,16 +35,16 @@ async function getUser(req, res) {
 
 // Path: POST /api/users
 async function createUser(req, res) {
-  const { username, email, password_hash } = req.body || {};
+  const { username, email, password } = req.body || {};
 
-  if (!username || !email || !password_hash) {
+  if (!username || !email || !password) {
     return res
       .status(400)
       .json(
         new Response(
           false,
           400,
-          'username, email and password_hash are required',
+          'username, email and password fields are required fields',
           null
         )
       );
@@ -53,7 +54,7 @@ async function createUser(req, res) {
     const newUser = await createUserModel(
       username,
       email,
-      password_hash,
+      password,
     
     );
 
@@ -67,7 +68,7 @@ async function createUser(req, res) {
       return res
         .status(409)
         .json(
-          new Response(false, 409, 'Username or email already exists', null)
+          new Response(false, 409, 'Username or email already exists in the database', null)
         );
     }
 
@@ -77,7 +78,52 @@ async function createUser(req, res) {
   }
 }
 
+// Path: POST /api/login
+async function login(req,res) {
+  const {email, password} = req.body || {};
+
+  if (!email || !password)
+    return res
+      .status(400)
+      .json(
+        new Response(false, 400, 'Email and Password are required fields', null)
+      );
+  
+  try {
+    const user = await getUserByEmail(email);
+
+    if (!user) {
+      return res
+        .status(401)
+        .json(
+          new Response(false, 401, 'User not found', null)
+        );
+    }
+    const passwordOk = await comparePassword(password, user.password_hash);
+    if (!passwordOk) {
+      return res
+        .status(401)
+        .json(new Response(false, 401, 'Invalid user credentials', null));
+
+    }
+
+    const { password_hash, ...safeUser } = user;
+
+    return res
+      .status(200)
+      .json(new Response(true, 200, 'Login successful', safeUser));
+
+  } catch (err) {
+    console.error('Controller login error:', err.message);
+    return res
+      .status(500)
+      .json(new Response(false, 500, 'User login failed', null));
+
+  }
+}
+
 module.exports = {
   getUser,
   createUser,
+  login
 };

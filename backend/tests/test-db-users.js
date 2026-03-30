@@ -1,12 +1,15 @@
 /**
  * A testing file to test the connection to the database with http requests
- * 
+ * It now tests:
+ *  - Register: POST /api/users
+ *  - Login:    POST /api/login
  */
 
 const http = require('http');
 
 const PORT = 3000;
-const BASE_PATH = '/api/users';
+const USERS_PATH = '/api/users';
+const LOGIN_PATH = '/api/login';
 
 // Perform HTTP request and parse JSON response
 function httpJsonRequest({ method, path, body }) {
@@ -54,13 +57,12 @@ async function getUserByIdViaApi(id) {
   console.log(`\nPath: GET /api/users/${id}`);
   const res = await httpJsonRequest({
     method: 'GET',
-    path: `${BASE_PATH}/${id}`,
+    path: `${USERS_PATH}/${id}`,
   });
 
   console.log('Status:', res.statusCode);
   console.log('Response JSON:', JSON.stringify(res.body, null, 2));
 
-  // Checks against your custom Response shape
   if (!res.body || res.body.status !== true || !res.body.data) {
     console.log('Unexpected response wrapper for GET user');
   } else {
@@ -70,54 +72,77 @@ async function getUserByIdViaApi(id) {
   return res;
 }
 
-async function createUserViaApi() {
-  console.log('\nPath: POST /api/users (create user)');
+async function registerUserViaApi() {
+  console.log('\nPath: POST /api/users (register user)');
 
   const unique = Date.now();
-  const body = {
+  const credentials = {
     username: `testboi_${unique}`,
     email: `testboi_${unique}@example.com`,
-    password_hash: 'some_hash_value_needs_JWT',
+    password: 'some_plain_password_test',
   };
 
   const res = await httpJsonRequest({
     method: 'POST',
-    path: BASE_PATH,
-    body,
+    path: USERS_PATH,
+    body: credentials,
   });
 
   console.log('Status:', res.statusCode);
   console.log('Response JSON:', JSON.stringify(res.body, null, 2));
 
-  // Checks against your custom Response shape
   if (!res.body || res.body.status !== true || !res.body.data) {
-    console.log('Unexpected response wrapper for POST user');
+    console.log('Unexpected response wrapper for POST (register) user');
   } else {
-    console.log('Custom response wrapper looks OK for POST user');
+    console.log('Custom response wrapper looks OK for POST (register) user');
   }
 
   const newUser = res.body && res.body.data;
-  return newUser;
+  return { newUser, credentials };
+}
+
+async function loginUserViaApi(email, password) {
+  console.log('\nPath: POST /api/login (login user)');
+
+  const res = await httpJsonRequest({
+    method: 'POST',
+    path: LOGIN_PATH,
+    body: { email, password },
+  });
+
+  console.log('Status:', res.statusCode);
+  console.log('Response JSON:', JSON.stringify(res.body, null, 2));
+
+  if (!res.body || res.body.status !== true || !res.body.data) {
+    console.log('Login did not succeed (as per wrapper status).');
+  } else {
+    console.log('Custom response wrapper looks OK for POST /api/login');
+  }
+
+  return res;
 }
 
 async function run() {
   try {
-    // Fetch an existing user by a specific id (e.g. 1)
+    // 1) (Optional) Fetch an existing user by a specific id (e.g. 1)
     await getUserByIdViaApi(1);
 
-    // Create a new user
-    const createdUser = await createUserViaApi();
-    if (!createdUser || !createdUser.id) {
-      console.log('New user was not created correctly; skipping fetch-by-id for new user.');
+    // 2) Register a new user
+    const { newUser, credentials } = await registerUserViaApi();
+    if (!newUser || !newUser.id) {
+      console.log('New user was not created correctly; skipping login test.');
       return;
     }
 
-    // 3) Fetch the newly created user by id
-    await getUserByIdViaApi(createdUser.id);
+    // 3) Login with the same credentials
+    await loginUserViaApi(credentials.email, credentials.password);
+
+    // 4) (Optional) Try login with wrong password to see 401
+    await loginUserViaApi(credentials.email, 'wrong_password_test');
   } catch (err) {
     console.error('Test error:', err.message);
   } finally {
-    console.log('\nUser API tests finished.');
+    console.log('\nUser API (register + login) tests finished.');
   }
 }
 

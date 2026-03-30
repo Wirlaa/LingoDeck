@@ -2,7 +2,8 @@
  * Contains SQL queries for getting a user by id and creating a new one.
  */
 
-const {pool} = require('../database');
+const {pool} = require('../utilities/database');
+const hash = require('../utilities/password');
 
 
 // Return user by id
@@ -20,12 +21,32 @@ async function getUserById(id){
     }
 }
 
+// Get user by Email, used by Login endpoints
+async function getUserByEmail(email){
+  const query = `
+  SELECT id, username, password_hash, created_at, updated_at
+  FROM users
+  WHERE email = $1
+  `;
 
-// Create  the user in db
-async function createUser(username, email, password_hash) {
-  if (!username || !email || !password_hash) {
-    throw new Error('Username, Email and the PasswordHash are required');
+  try {
+    const { rows } = await pool.query(query, [email]);
+    return rows[0];
+  } catch (err) {
+    console.error('Error getting user by email', err.message);
+    throw err;
+
   }
+
+}
+
+
+// Create  the user in db, used by register endpoints
+async function createUser(username, email, password) {
+  if (!username || !email || !password) {
+    throw new Error('Username, Email and the Password are required');
+  }
+
 
   const query = `
     INSERT INTO users (username, email, password_hash)
@@ -33,9 +54,9 @@ async function createUser(username, email, password_hash) {
     RETURNING id, username, email, created_at, updated_at
   `;
 
-  const values = [username, email, password_hash];
-
   try {
+    const password_hash = await hash.hashPassword(password);
+    const values = [username, email, password_hash];
     const { rows } = await pool.query(query, values);
     return rows[0];
   } catch (err) {
@@ -44,7 +65,10 @@ async function createUser(username, email, password_hash) {
   }
 }
 
+
+
 module.exports = {
     getUserById,
+    getUserByEmail,
     createUser
 }

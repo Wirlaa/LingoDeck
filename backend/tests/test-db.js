@@ -1,6 +1,6 @@
 // This is obsolete, I just left it for now. It just prints all users. 
 
-const {pool} = require('../src/database');
+const {pool} = require('../src/utilities/database');
 
 async function printAllUsers(){
     try {
