@@ -5,6 +5,7 @@
 
 const express = require('express');
 const { routeCors } = require('../middleware/cors');
+const { authRequired } = require('../middleware/auth');
 const router = express.Router();
 const userController = require('../controllers/userController');
 
@@ -23,11 +24,14 @@ router.post('/echo', (req, res) => {
 	res.json({ youSent: req.body });
 });
 
-router.get('/users/:id', routeCors, userController.getUser);
+// This route is protected by our Authorization middleware.
+router.get('/users/:id', routeCors, authRequired, userController.getUser);
 
 router.post('/users', routeCors, userController.createUser);
 
 router.post('/login', routeCors, userController.login);
+
+router.get('/token-status', routeCors, userController.checkTokenStatus);
 
 module.exports = router;
 

@@ -1,6 +1,9 @@
 const { getUserById, createUser: createUserModel, getUserByEmail } = require('../models/userModel');
 const { comparePassword } = require('../utilities/password');
+const { signJWToken, verifyJWToken } = require('../utilities/jwt');
+const { extractBearerToken } = require('../utilities/authHeader');
 const Response = require('../utilities/response');
+
 
 // Path: GET /api/users/:id
 async function getUser(req, res) {
@@ -109,9 +112,22 @@ async function login(req,res) {
 
     const { password_hash, ...safeUser } = user;
 
+    const payload = {
+      id: user.id,
+      username: user.username,
+      email: user.email
+    };
+
+    const jwToken = signJWToken(payload);
+
+    const responseData = {
+      user: safeUser,
+      jwToken,
+    };
+
     return res
       .status(200)
-      .json(new Response(true, 200, 'Login successful', safeUser));
+      .json(new Response(true, 200, 'Login successful', responseData));
 
   } catch (err) {
     console.error('Controller login error:', err.message);
@@ -122,8 +138,35 @@ async function login(req,res) {
   }
 }
 
+// This repeats some of the logic in auth.js, i might separate it later on
+function checkTokenStatus(req, res) {
+  const { ok, token, errorMessage } = extractBearerToken(req);
+
+  if (!ok) {
+    return res
+      .status(400)
+      .json(new Response(false, 400, errorMessage, null));
+  }
+
+  const { valid, expired, decoded } = verifyJWToken(token);
+
+  const message = valid ? 'Token is valid' : expired ? 'Token has expired' : 'Token is invalid';
+
+  const data = {
+    valid,
+    expired,
+    user: valid ? decoded : null,
+  };
+
+  return res
+    .status(200)
+    .json(new Response(true, 200, message, data));
+
+}
+
 module.exports = {
   getUser,
   createUser,
-  login
+  login,
+  checkTokenStatus
 };

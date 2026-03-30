@@ -1,7 +1,14 @@
+/**
+ * Simple encryption using bcrypt. It hashes the password and deals with that.
+ * 
+ * SALT_ROUNDS defines the number of times the algorithm will run,
+ * more means a more secure password hash.
+ */
+
 const bcrypt = require('bcryptjs');
 const config = require('../config/config');
 
-const SALT_ROUNDS = Number(config.db.salt_rounds) || 10;
+const SALT_ROUNDS = Number(config.auth.salt_rounds) || 10;
 
 async function hashPassword(password) {
     if (!password)
