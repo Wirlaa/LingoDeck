@@ -138,7 +138,7 @@ async function login(req,res) {
   }
 }
 
-// This repeats some of the logic in auth.js, i might separate it later on
+// Checks the JWT status and returns it.
 function checkTokenStatus(req, res) {
   const { ok, token, errorMessage } = extractBearerToken(req);
 
