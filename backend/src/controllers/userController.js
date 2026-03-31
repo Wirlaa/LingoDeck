@@ -138,6 +138,7 @@ async function login(req,res) {
   }
 }
 
+// Path: GET /api/token-status
 // Checks the JWT status and returns it.
 function checkTokenStatus(req, res) {
   const { ok, token, errorMessage } = extractBearerToken(req);
