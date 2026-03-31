@@ -1,0 +1,48 @@
+services:
+  challenge-service:
+    build: .
+    container_name: lingo-challenge-service
+    ports:
+      - "8003:8003"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://lingo:lingo@challenge-db:5432/challenge_db
+      SERVICE_SECRET: ${SERVICE_SECRET:-changeme}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      QUEST_SERVICE_URL: ${QUEST_SERVICE_URL:-http://quest-service:8001}
+      QUEST_SERVICE_SECRET: ${QUEST_SERVICE_SECRET:-changeme}
+      DEBUG: "true"
+    depends_on:
+      challenge-db:
+        condition: service_healthy
+    networks:
+      - lingo-challenge-net
+    volumes:
+      - .:/app
+    restart: unless-stopped
+
+  challenge-db:
+    image: postgres:16-alpine
+    container_name: lingo-challenge-db
+    environment:
+      POSTGRES_USER: lingo
+      POSTGRES_PASSWORD: lingo
+      POSTGRES_DB: challenge_db
+    ports:
+      - "5436:5432"
+    volumes:
+      - challenge-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lingo -d challenge_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - lingo-challenge-net
+    restart: unless-stopped
+
+volumes:
+  challenge-db-data:
+
+networks:
+  lingo-challenge-net:
+    driver: bridge

@@ -1,0 +1,45 @@
+services:
+  card-service:
+    build: .
+    container_name: lingo-card-service
+    ports:
+      - "8002:8002"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://lingo:lingo@card-db:5432/card_db
+      SERVICE_SECRET: ${SERVICE_SECRET:-changeme}
+      DEBUG: "true"
+    depends_on:
+      card-db:
+        condition: service_healthy
+    networks:
+      - lingo-card-net
+    volumes:
+      - .:/app
+    restart: unless-stopped
+
+  card-db:
+    image: postgres:16-alpine
+    container_name: lingo-card-db
+    environment:
+      POSTGRES_USER: lingo
+      POSTGRES_PASSWORD: lingo
+      POSTGRES_DB: card_db
+    ports:
+      - "5435:5432"
+    volumes:
+      - card-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lingo -d card_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - lingo-card-net
+    restart: unless-stopped
+
+volumes:
+  card-db-data:
+
+networks:
+  lingo-card-net:
+    driver: bridge

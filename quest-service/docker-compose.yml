@@ -1,0 +1,45 @@
+services:
+  quest-service:
+    build: .
+    container_name: lingo-quest-service
+    ports:
+      - "8001:8001"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://lingo:lingo@quest-db:5432/quest_db
+      SERVICE_SECRET: ${SERVICE_SECRET:-changeme}
+      DEBUG: "true"
+    depends_on:
+      quest-db:
+        condition: service_healthy
+    networks:
+      - lingo-quest-net
+    volumes:
+      - .:/app
+    restart: unless-stopped
+
+  quest-db:
+    image: postgres:16-alpine
+    container_name: lingo-quest-db
+    environment:
+      POSTGRES_USER: lingo
+      POSTGRES_PASSWORD: lingo
+      POSTGRES_DB: quest_db
+    ports:
+      - "5434:5432"
+    volumes:
+      - quest-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lingo -d quest_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - lingo-quest-net
+    restart: unless-stopped
+
+volumes:
+  quest-db-data:
+
+networks:
+  lingo-quest-net:
+    driver: bridge
