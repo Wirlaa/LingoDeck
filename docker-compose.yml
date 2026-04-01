@@ -1,0 +1,125 @@
+#
+# Lingo Deck — Python Microservices
+#
+# ONE shared PostgreSQL database, THREE FastAPI services.
+# All services connect to the same DB instance on the internal Docker network.
+#
+# Ports (external):
+#   5433  → PostgreSQL
+#   8001  → quest-service
+#   8002  → card-service
+#   8003  → challenge-service
+#
+# First time setup:
+#   1. cp .env.example .env  (fill in secrets)
+#   2. docker compose up
+#   3. curl -X POST http://localhost:8001/admin/seed \
+#        -H "x-service-secret: <your_secret>"
+#
+# LLM deployment options:
+#   Option A (local/VPS with Ollama):
+#     Set LLM_BACKEND=ollama, install Ollama on the host, pull a model.
+#     Services call Ollama at OLLAMA_HOST (default: host.docker.internal:11434).
+#
+#   Option B (cloud with Anthropic):
+#     Set LLM_BACKEND=anthropic and ANTHROPIC_API_KEY in .env.
+#     No extra setup needed.
+#
+#   Option C (auto-detect):
+#     Set LLM_BACKEND=auto (default).
+#     Uses Anthropic if API key is present, else falls back to Ollama.
+
+services:
+
+  # ── Shared database ──────────────────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    container_name: lingo-db
+    environment:
+      POSTGRES_USER: lingo
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-lingo}
+      POSTGRES_DB: lingo_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lingo -d lingo_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - lingo-net
+    restart: unless-stopped
+
+  # ── Quest Service (8001) ─────────────────────────────────────────────────────
+  quest-service:
+    build: ./quest-service
+    container_name: lingo-quest-service
+    ports:
+      - "8001:8001"
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://lingo:${DB_PASSWORD:-lingo}@db:5432/lingo_db
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - lingo-net
+    # Mount source for local dev — remove in production
+    volumes:
+      - ./quest-service:/app
+    restart: unless-stopped
+
+  # ── Card Service (8002) ──────────────────────────────────────────────────────
+  card-service:
+    build: ./card-service
+    container_name: lingo-card-service
+    ports:
+      - "8002:8002"
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://lingo:${DB_PASSWORD:-lingo}@db:5432/lingo_db
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - lingo-net
+    volumes:
+      - ./card-service:/app
+    restart: unless-stopped
+
+  # ── Challenge Service (8003) ─────────────────────────────────────────────────
+  challenge-service:
+    build: ./challenge-service
+    container_name: lingo-challenge-service
+    ports:
+      - "8003:8003"
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://lingo:${DB_PASSWORD:-lingo}@db:5432/lingo_db
+      # Quest service is resolved by Docker's internal DNS
+      QUEST_SERVICE_URL: http://quest-service:8001
+    depends_on:
+      db:
+        condition: service_healthy
+      quest-service:
+        condition: service_started
+    networks:
+      - lingo-net
+    volumes:
+      - ./challenge-service:/app
+    # For Ollama access from inside Docker on macOS/Windows:
+    # extra_hosts:
+    #   - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+volumes:
+  db-data:
+
+networks:
+  lingo-net:
+    driver: bridge
