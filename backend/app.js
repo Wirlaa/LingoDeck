@@ -10,11 +10,14 @@
 const express = require('express');
 const config = require('./src/config/config');
 const routes = require('./src/routes/routes');
+const {routeCors} = require('./src/middleware/cors');
 
 const app = express();
 
 // Parse JSON bodies so /api/echo can read req.body
 app.use(express.json());
+// Use CORS globally
+app.use(routeCors);
 
 const port = config.port;
 

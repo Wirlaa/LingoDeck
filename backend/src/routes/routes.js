@@ -1,6 +1,6 @@
 /**
  * Routes file for app.js to use, you can add or remove routes from here and it should 
- * work fine following the structure you see here. Add routeCors to any route you want CORS with.
+ * work fine following the structure you see here.
  */
 
 const express = require('express');
@@ -25,13 +25,13 @@ router.post('/echo', (req, res) => {
 });
 
 // This route is protected by our Authorization middleware.
-router.get('/users/:id', routeCors, authRequired, userController.getUser);
+router.get('/users/:id', authRequired, userController.getUser);
 
-router.post('/users', routeCors, userController.createUser);
+router.post('/users', userController.createUser);
 
-router.post('/login', routeCors, userController.login);
+router.post('/login', userController.login);
 
-router.get('/token-status', routeCors, userController.checkTokenStatus);
+router.get('/token-status', userController.checkTokenStatus);
 
 module.exports = router;
 
