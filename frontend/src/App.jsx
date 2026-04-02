@@ -4,7 +4,7 @@ import { ScrollSmoother, ScrollTrigger, SplitText } from "gsap/all";
 import { useGSAP } from "@gsap/react";
 import FooterSection from "./sections/FooterSection";
 import { Routes, Route } from "react-router-dom";
-
+import { Toaster } from "react-hot-toast";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
@@ -20,6 +20,7 @@ const App = () => {
   });
   return (
     <>
+      <Toaster position="top-right" />
       <Navbar />
       <div id="smooth-wrapper">
         <div id="smooth-content">

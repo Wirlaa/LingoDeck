@@ -1,7 +1,52 @@
-import React from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
+import api from "../api/api";
+import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
 
 const RegisterSection = () => {
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    username: "",
+    email: "",
+    password: "",
+    repeatPassword: "",
+  });
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (formData.password !== formData.repeatPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+
+    try {
+      const res = await api.post("/users", {
+        username: formData.username,
+        email: formData.email,
+        password: formData.password,
+      });
+
+      toast.success("Account created successfully 🎉");
+      setTimeout(() => {
+        navigate("/login");
+      }, 1000);
+      console.log(res.data);
+    } catch (err) {
+      const message = err.response?.data?.message || "Something went wrong";
+
+      toast.error(message);
+    }
+  };
+
   return (
     <section
       className="relative min-h-screen flex items-center justify-center px-4"
@@ -22,25 +67,34 @@ const RegisterSection = () => {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 items-center sm:items-start mt-4">
-            <div className="relative">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-[#dff3ef] rounded-2xl sm:rounded-[18px] border-2 border-[#b7d6cf] flex items-center justify-center text-xl sm:text-2xl overflow-hidden">
-                🌱
+            <form
+              onSubmit={handleSubmit}
+              className="flex-1 w-full flex flex-col gap-3"
+            >
+              <div className="flex items-center gap-2 w-full">
+                <span className="text-xs sm:text-sm text-[#2f6f68] w-20 shrink-0">
+                  Username
+                </span>
+                <input
+                  name="username"
+                  value={formData.username}
+                  onChange={handleChange}
+                  placeholder="enter username"
+                  className="flex-1 bg-white border-2 border-[#cfe7e2] rounded-full px-4 py-2 text-sm outline-none"
+                />
               </div>
 
-              <div className="absolute -bottom-2 -right-2 bg-[#6ec6c2] w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-white text-[10px] sm:text-xs shadow">
-                +
-              </div>
-            </div>
-
-            <form className="flex-1 w-full flex flex-col gap-3">
               <div className="flex items-center gap-2 w-full">
                 <span className="text-xs sm:text-sm text-[#2f6f68] w-20 shrink-0">
                   Email
                 </span>
                 <input
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
                   type="email"
                   placeholder="enter email"
-                  className="flex-1 min-w-0 bg-white border-2 border-[#cfe7e2] rounded-full px-3 sm:px-4 py-1.5 text-xs sm:text-sm outline-none"
+                  className="flex-1 bg-white border-2 border-[#cfe7e2] rounded-full px-4 py-2 text-sm outline-none"
                 />
               </div>
 
@@ -49,9 +103,12 @@ const RegisterSection = () => {
                   Password
                 </span>
                 <input
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
                   type="password"
                   placeholder="enter password"
-                  className="flex-1 min-w-0 bg-white border-2 border-[#cfe7e2] rounded-full px-3 sm:px-4 py-1.5 text-xs sm:text-sm outline-none"
+                  className="flex-1 bg-white border-2 border-[#cfe7e2] rounded-full px-4 py-2 text-sm outline-none"
                 />
               </div>
 
@@ -60,19 +117,25 @@ const RegisterSection = () => {
                   Repeat
                 </span>
                 <input
+                  name="repeatPassword"
+                  value={formData.repeatPassword}
+                  onChange={handleChange}
                   type="password"
                   placeholder="repeat password"
-                  className="flex-1 min-w-0 bg-white border-2 border-[#cfe7e2] rounded-full px-3 sm:px-4 py-1.5 text-xs sm:text-sm outline-none"
+                  className="flex-1 bg-white border-2 border-[#cfe7e2] rounded-full px-4 py-2 text-sm outline-none"
                 />
               </div>
 
-              <button className="mt-4 bg-[#6ec6c2] hover:bg-[#5bb3af] text-white py-2 rounded-full shadow-md font-medium text-sm sm:text-base">
+              <button
+                type="submit"
+                className="mt-4 cursor-pointer bg-[#6ec6c2] hover:bg-[#5bb3af] text-white py-2 rounded-full shadow-md font-medium"
+              >
                 Create Account
               </button>
-              <div className="text-center text-xs sm:text-sm text-[#2f6f68] ">
+
+              <div className="text-center text-sm text-[#2f6f68]">
                 Already registered?
-                <Link to="/login" className="hover:underline mt-2">
-                  {" "}
+                <Link to="/login" className="hover:underline ml-1">
                   Login
                 </Link>
               </div>
