@@ -25,7 +25,7 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      console.warn("Unauthorized - maybe token expired");
+      console.warn("Unauthorized request (401). Authentication failed.");
 
       localStorage.removeItem("token");
     }
