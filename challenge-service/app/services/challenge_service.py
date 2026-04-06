@@ -30,7 +30,6 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
-from app.core.http_client import fetch_quest_question
 from app.models.challenge_question import ChallengeQuestion
 from app.models.challenge_session import ChallengeAction, ChallengeSession
 from app.services import kela_boss

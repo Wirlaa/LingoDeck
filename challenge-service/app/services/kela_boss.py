@@ -69,7 +69,7 @@ KELA_TAUNTS = [
 ]
 
 VICTORY_TEXT = "Hakemus hyväksytty! Application approved. A true Finnish miracle."
-DEFEAT_TEXT = "You receive a letter in Finnish. It requires a response in Finnish."
+DEFEAT_TEXT = "Hakemus hylätty. Your application has been rejected. Reason: insufficient Finnish. Please try again in 6-8 weeks."
 
 
 async def generate_questions(
