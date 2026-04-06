@@ -40,7 +40,7 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD:-lingo}
       POSTGRES_DB: lingo_db
     ports:
-      - "5433:5432"
+      - "5432:5432"
     volumes:
       - db-data:/var/lib/postgresql/data
     healthcheck:
@@ -70,7 +70,7 @@ services:
     # Mount source for local dev — remove in production
     volumes:
       - ./quest-service:/app
-    restart: unless-stopped
+    restart: on-failure:3
 
   # ── Card Service (8002) ──────────────────────────────────────────────────────
   card-service:
@@ -89,7 +89,7 @@ services:
       - lingo-net
     volumes:
       - ./card-service:/app
-    restart: unless-stopped
+    restart: on-failure:3
 
   # ── Challenge Service (8003) ─────────────────────────────────────────────────
   challenge-service:
@@ -115,7 +115,7 @@ services:
     # For Ollama access from inside Docker on macOS/Windows:
     # extra_hosts:
     #   - "host.docker.internal:host-gateway"
-    restart: unless-stopped
+    restart: on-failure:3
 
 volumes:
   db-data:
