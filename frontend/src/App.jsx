@@ -19,6 +19,7 @@ const App = () => {
       smoothTouch: 0.1,
     });
   });
+
   return (
     <>
       <Toaster position="top-right" />
