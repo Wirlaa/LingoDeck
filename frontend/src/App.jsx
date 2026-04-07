@@ -8,6 +8,7 @@ import { Toaster } from "react-hot-toast";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
+import QuestPage from "./pages/QuestPage";
 
 const App = () => {
   gsap.registerPlugin(ScrollTrigger, ScrollSmoother, SplitText);
@@ -28,6 +29,7 @@ const App = () => {
             <Route path="/" element={<HomePage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
+            <Route path="/quest" element={<QuestPage />} />
           </Routes>
           <FooterSection />
         </div>
