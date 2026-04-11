@@ -54,7 +54,9 @@ services:
 
   # ── Quest Service (8001) ─────────────────────────────────────────────────────
   quest-service:
-    build: ./quest-service
+    build:
+      context: .
+      dockerfile: quest-service/Dockerfile
     container_name: lingo-quest-service
     ports:
       - "8001:8001"
@@ -74,7 +76,9 @@ services:
 
   # ── Card Service (8002) ──────────────────────────────────────────────────────
   card-service:
-    build: ./card-service
+    build: 
+      context: .
+      dockerfile: card-service/Dockerfile
     container_name: lingo-card-service
     ports:
       - "8002:8002"

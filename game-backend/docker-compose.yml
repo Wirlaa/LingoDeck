@@ -1,0 +1,11 @@
+services:
+  game-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: game-backend
+    env_file:
+      - .env.docker  
+    ports:
+      - "4000:4000"
+    restart: unless-stopped
