@@ -186,7 +186,7 @@ SEED_DATA: list[dict] = [
         "scenario_tags": "cafe_order",
     },
     {
-        "sentence_fi": "Voisinko saada tämän mukaan?",
+        "sentence_fi": "Saako tähän ottaa mukaan?",
         "sentence_en": "Can this be taken away?",
         "target_fi": "mukaan",
         "target_en": "away",
@@ -196,7 +196,7 @@ SEED_DATA: list[dict] = [
     },
 
     {
-        "sentence_fi": "Kuinka kauan sinne kestää kävellä?",
+        "sentence_fi": "Kuinka kauan kestää kävellä sinne?",
         "sentence_en": "How long does it take to walk there?",
         "target_fi": "kävellä",
         "target_en": "walk",
@@ -233,7 +233,7 @@ SEED_DATA: list[dict] = [
         "scenario_tags": "job_interview",
     },
     {
-        "sentence_fi": "Olen tiimipelaaja ja nautin muiden kanssa työskentelystä.",
+        "sentence_fi": "Olen tiimipelaaja ja pidän yhteistyöstä.",
         "sentence_en": "I am a team player and enjoy collaboration.",
         "target_fi": "tiimipelaaja",
         "target_en": "team player",
@@ -348,7 +348,7 @@ SEED_DATA: list[dict] = [
     },
 
     {
-        "sentence_fi": "Hakemukseni on vireillä.",
+        "sentence_fi": "Hakemukseni on vireillä käsittelyssä.",
         "sentence_en": "My application is currently being processed.",
         "target_fi": "vireillä",
         "target_en": "currently being processed",
@@ -447,7 +447,7 @@ SEED_DATA: list[dict] = [
         "scenario_tags": "kela_boss",
     },
     {
-        "sentence_fi": "Pyydän teitä ystävällisesti vahvistamaan hakemukseni vastaanoton.",
+        "sentence_fi": "Ystävällisesti pyydän teitä vahvistamaan hakemukseni vastaanoton.",
         "sentence_en": "I kindly ask you to confirm the receipt of my application.",
         "target_fi": "Ystävällisesti",
         "target_en": "kindly",
@@ -456,7 +456,7 @@ SEED_DATA: list[dict] = [
         "scenario_tags": "kela_boss,job_interview",
     },
     {
-        "sentence_fi": "Käyttäytyäkseen asiallisesti hänen täytyy hallita kieli.",
+        "sentence_fi": "Käyttäytyäkseen asiallisesti hänen täytyy hallita kieltä.",
         "sentence_en": "To behave appropriately he must master the language.",
         "target_fi": "Käyttäytyäkseen",
         "target_en": "to behave",
