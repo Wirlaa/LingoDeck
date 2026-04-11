@@ -13,6 +13,13 @@ Difficulty bands map to card rarities:
   Rare       0.41-0.60  verb conjugations, basic cases
   Epic       0.61-0.80  partitive, compound nouns
   Legendary  0.81-1.00  bureaucratic Finnish, idioms
+
+Content types:
+  noun    Concrete noun that can be represented visually (e.g. kahvia, metro)
+  phrase  Functional expression, directional word, or polite formula
+          (e.g. vasemmalle, Kiitos, kortilla)
+  idiom   Multi-word or compound expression with non-literal / bureaucratic
+          meaning (e.g. perustoimeentulotukea, tiimipelaaja, Mennään)
 """
 
 import enum
@@ -31,33 +38,26 @@ class Rarity(str, enum.Enum):
     LEGENDARY = "Legendary"
 
 
+class ContentType(str, enum.Enum):
+    NOUN   = "noun"    # concrete, picturable object
+    PHRASE = "phrase"  # functional expression / word-in-context
+    IDIOM  = "idiom"   # compound, bureaucratic, or figurative expression
+
+
 class LanguageContent(Base):
     __tablename__ = "language_content"
 
-    # Full Finnish sentence e.g. "Haluaisin kupillisen kahvia, kiitos."
     sentence_fi: Mapped[str] = mapped_column(Text, nullable=False)
-
-    # Full English translation e.g. "I would like a cup of coffee, please."
     sentence_en: Mapped[str] = mapped_column(Text, nullable=False)
-
-    # The Finnish word being tested — this gets blanked out in the quest
     target_fi: Mapped[str] = mapped_column(String(256), nullable=False, index=True)
-
-    # English translation of the target word
     target_en: Mapped[str] = mapped_column(String(256), nullable=False)
-
-    # Difficulty 0.0 (beginner) → 1.0 (legendary)
     difficulty: Mapped[float] = mapped_column(Float, nullable=False, default=0.1)
-
-    # Rarity tier derived from difficulty
     rarity: Mapped[str] = mapped_column(String(32), nullable=False, default=Rarity.COMMON)
-
-    # Comma-separated scenario tags e.g. "cafe_order,kela_boss"
-    # Used to filter sentences by context
     scenario_tags: Mapped[str] = mapped_column(String(256), nullable=False, default="")
-
-    # Soft delete — set False to hide without destroying data
+    content_type: Mapped[str] = mapped_column(
+        String(16), nullable=False, default=ContentType.PHRASE
+    )
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
     def __repr__(self) -> str:
-        return f"<LanguageContent target='{self.target_fi}' rarity={self.rarity}>"
+        return f"<LanguageContent target='{self.target_fi}' type={self.content_type} rarity={self.rarity}>"
