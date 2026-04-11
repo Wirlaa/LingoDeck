@@ -159,9 +159,9 @@ SEED_DATA: list[dict] = [
     #Uncommon
 
     {
-        "sentence_fi": "Onko teillä kasvispohjaista maitoa?",
+        "sentence_fi": "Onko teillä kasvipohjaista maitoa?",
         "sentence_en": "Do you have plant-based milk?",
-        "target_fi": "kasvispohjaista",
+        "target_fi": "kasvipohjaista",
         "target_en": "plant-based",
         "difficulty": 0.30,
         "rarity": "Uncommon",
