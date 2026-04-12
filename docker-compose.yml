@@ -3,7 +3,7 @@ services:
   # ── Shared database for Python microservices (lingo-db) ──────────────────────
   db:
     image: postgres:16-alpine
-    container_name: lingo-db
+    container_name: lingo-auth-db
     environment:
       POSTGRES_USER: lingo
       POSTGRES_PASSWORD: ${DB_PASSWORD:-lingo}
@@ -95,7 +95,7 @@ services:
     build:
       context: ./game-backend
       dockerfile: Dockerfile
-    container_name: game-backend
+    container_name: lingo-game-backend
     env_file:
       - ./game-backend/.env.docker
     ports:
@@ -114,7 +114,7 @@ services:
   # ── Backend Postgres for Node auth API (5434) ────────────────────────────────
   backend-db:
     image: postgres:17.4
-    container_name: backend_auth_db
+    container_name: lingo_backend_auth_db
     restart: always
     environment:
       TZ: Europe/Helsinki

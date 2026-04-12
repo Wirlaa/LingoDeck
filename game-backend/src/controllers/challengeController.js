@@ -59,4 +59,49 @@ async function getChallenge(req, res) {
   }
 }
 
-module.exports = { startChallenge, challengeAction, getChallenge };
+// POST /api/challenges/:sessionId/pre-turn
+async function preTurn(req, res) {
+  const { sessionId } = req.params;
+  const { support_card_id } = req.body || {};
+
+  try {
+    const { data } = await challengeClient.post(
+      `/challenges/${sessionId}/pre-turn`,
+      null,
+      { params: { support_card_id } }
+    );
+    return res
+      .status(200)
+      .json(new Response(true, 200, "Pre-turn applied", data));
+  } catch (err) {
+    console.error("preTurn error:", err.message);
+    const status = err.response?.status || 500;
+    const detail = err.response?.data?.detail || "Failed to apply pre-turn";
+    return res
+      .status(status)
+      .json(new Response(false, status, detail, null));
+  }
+}
+
+// GET /api/challenges/:sessionId/hand
+async function getHand(req, res) {
+  const { sessionId } = req.params;
+
+  try {
+    const { data } = await challengeClient.get(
+      `/challenges/${sessionId}/hand`
+    );
+    return res
+      .status(200)
+      .json(new Response(true, 200, "Hand fetched", data));
+  } catch (err) {
+    console.error("getHand error:", err.message);
+    const status = err.response?.status || 500;
+    const detail = err.response?.data?.detail || "Failed to fetch hand";
+    return res
+      .status(status)
+      .json(new Response(false, status, detail, null));
+  }
+}
+
+module.exports = { startChallenge, challengeAction, getChallenge, preTurn,  getHand };

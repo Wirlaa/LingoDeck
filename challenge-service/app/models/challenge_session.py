@@ -1,79 +1,75 @@
 """
-ChallengeSession and ChallengeAction models.
+ChallengeSession v2.1 — adds pre-turn state persistence.
 
-ChallengeSession — tracks the full state of one KELA boss fight.
-
-  Storing everything in the DB means the service is stateless —
-  any request can resume a fight exactly where it left off.
-
-  question_queue is a JSON list of ChallengeQuestion UUIDs generated
-  upfront at fight start. During the fight we just read from this list.
-
-ChallengeAction — logs every turn.
-  One row per turn — used for stats, debugging, and replays.
+New fields vs v2.0:
+  pre_turn_used         → True if FOCUS pre-turn was already called this turn
+  pre_turn_card_id      → which support card was used in pre-turn
+  pre_turn_removed_opt  → which option was removed by FOCUS
+  pre_turn_turn         → which turn number the pre-turn was for (prevents reuse)
 """
 
 import uuid
-
-from sqlalchemy import Float, Integer, String, Text
+from sqlalchemy import Boolean, Float, Integer, String, Text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
-
 from app.models.base import Base
 
 
 class ChallengeSession(Base):
     __tablename__ = "challenge_sessions"
 
-    user_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    user_id:  Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    scenario: Mapped[str] = mapped_column(String(64),  nullable=False, default="kela_boss")
+    status:   Mapped[str] = mapped_column(String(32),  nullable=False, default="active")
 
-    # Always "kela_boss" — other scenarios removed, KELA only
-    scenario: Mapped[str] = mapped_column(String(64), nullable=False, default="kela_boss")
+    battle_meter:   Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    win_threshold:  Mapped[int] = mapped_column(Integer, nullable=False, default=100)
+    lose_threshold: Mapped[int] = mapped_column(Integer, nullable=False, default=-100)
+    correct_base:   Mapped[int] = mapped_column(Integer, nullable=False, default=20)
+    wrong_base:     Mapped[int] = mapped_column(Integer, nullable=False, default=-15)
 
-    # "active" | "won" | "lost" | "draw"
-    status: Mapped[str] = mapped_column(String(32), nullable=False, default="active")
-
-    player_hp: Mapped[int] = mapped_column(Integer, nullable=False)
-    ai_hp: Mapped[int] = mapped_column(Integer, nullable=False)
-
-    # Current turn number, starts at 1
     current_turn: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    max_turns:    Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
-    # Ordered list of ChallengeQuestion UUIDs as JSON array of strings
-    question_queue: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
+    question_queue:     Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
+    deck:               Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
+    hand:               Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
+    draw_pile:          Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
+    discard_pile:       Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
+    used_support_cards: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
 
-    # Player's deck as sent by Node.js
-    # e.g. [{"card_id": "...", "rarity": "Rare", "word_fi": "tukea", "power": 20}]
-    deck: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
+    # Pre-turn state — persisted to prevent FOCUS abuse
+    pre_turn_used:        Mapped[bool]       = mapped_column(Boolean, nullable=False, default=False)
+    pre_turn_card_id:     Mapped[str | None] = mapped_column(String(128), nullable=True)
+    pre_turn_removed_opt: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    pre_turn_turn:        Mapped[int]        = mapped_column(Integer, nullable=False, default=0)
 
-    xp_earned: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    correct_streak: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    max_streak:     Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    xp_earned:      Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     bonus_packs: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
     def __repr__(self) -> str:
         return (
             f"<ChallengeSession status={self.status} "
-            f"turn={self.current_turn} "
-            f"player_hp={self.player_hp} ai_hp={self.ai_hp}>"
+            f"turn={self.current_turn}/{self.max_turns} "
+            f"meter={self.battle_meter}>"
         )
 
 
 class ChallengeAction(Base):
-    """One turn logged per row."""
     __tablename__ = "challenge_actions"
 
-    session_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), nullable=False, index=True
-    )
-    turn: Mapped[int] = mapped_column(Integer, nullable=False)
+    session_id:  Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
+    turn:        Mapped[int]       = mapped_column(Integer, nullable=False)
     question_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
-    given_answer: Mapped[str] = mapped_column(Text, nullable=False)
-    is_correct: Mapped[bool] = mapped_column(nullable=False, default=False)
-    damage_dealt: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    damage_taken: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-
-    def __repr__(self) -> str:
-        return (
-            f"<ChallengeAction turn={self.turn} "
-            f"correct={self.is_correct} "
-            f"dealt={self.damage_dealt} taken={self.damage_taken}>"
-        )
+    given_answer:    Mapped[str]  = mapped_column(Text, nullable=False)
+    is_correct:      Mapped[bool] = mapped_column(nullable=False, default=False)
+    answer_card_id:  Mapped[str | None] = mapped_column(String(128), nullable=True)
+    support_card_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    meter_before: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    meter_delta:  Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    meter_after:  Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    effect_result:             Mapped[dict]  = mapped_column(JSONB, nullable=False, default=dict)
+    scenario_bonus_applied:    Mapped[bool]  = mapped_column(nullable=False, default=False)
+    scenario_bonus_multiplier: Mapped[float] = mapped_column(Float, nullable=False, default=1.0)

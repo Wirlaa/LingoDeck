@@ -1,5 +1,5 @@
 // game-backend/tests/test-microservices.js
-// Run with:  node tests/test-microservices.js
+// Run with:  node tests/microTest.js
 // Prereq: backend (port 3000), game-backend (port 4000),
 //         and all Python services (db, quest, card, challenge) running.
 
@@ -255,9 +255,10 @@ async function testChallenges(token, userId) {
   const state = res.body && res.body.data;
   const sessionId = state && state.session_id;
   const nextQuestion = state && state.next_question;
+  const hand = state && state.hand;
 
   if (!sessionId || !nextQuestion) {
-    console.warn("No session_id/next_question returned; skipping action/get tests.");
+    console.warn("No session_id/next_question returned; skipping further tests.");
     return;
   }
 
@@ -267,6 +268,32 @@ async function testChallenges(token, userId) {
       ? nextQuestion.options[0]
       : "foo";
 
+  // Choose some card to play as the answer card.
+  // Prefer a card from hand, otherwise fall back to first deck card.
+  const answerCardId =
+    (Array.isArray(hand) && hand.length > 0 && hand[0].card_id) || deck[0].card_id;
+
+  // Optionally pick a support card (different from the answer card) from hand.
+  const supportCardId =
+    Array.isArray(hand) && hand.length > 1
+      ? hand.find((c) => c.card_id !== answerCardId)?.card_id || null
+      : null;
+
+  if (supportCardId) {
+    console.log("\n[GAME] POST /api/challenges/:sessionId/pre-turn");
+    res = await gameRequest({
+      method: "POST",
+      path: `/api/challenges/${sessionId}/pre-turn?support_card_id=${encodeURIComponent(
+        supportCardId,
+      )}`,
+      headers: authHeader,
+    });
+    console.log("Status:", res.statusCode);
+    console.log("Body:", JSON.stringify(res.body, null, 2));
+  } else {
+    console.warn("No support card in hand; skipping pre-turn test.");
+  }
+
   console.log("\n[GAME] POST /api/challenges/:sessionId/action");
   res = await gameRequest({
     method: "POST",
@@ -275,6 +302,8 @@ async function testChallenges(token, userId) {
     body: {
       question_id: questionId,
       given_answer: answerOption,
+      answer_card_id: answerCardId,
+      support_card_id: supportCardId,
     },
   });
   console.log("Status:", res.statusCode);
@@ -284,6 +313,15 @@ async function testChallenges(token, userId) {
   res = await gameRequest({
     method: "GET",
     path: `/api/challenges/${sessionId}`,
+    headers: authHeader,
+  });
+  console.log("Status:", res.statusCode);
+  console.log("Body:", JSON.stringify(res.body, null, 2));
+
+  console.log("\n[GAME] GET /api/challenges/:sessionId/hand");
+  res = await gameRequest({
+    method: "GET",
+    path: `/api/challenges/${sessionId}/hand`,
     headers: authHeader,
   });
   console.log("Status:", res.statusCode);
