@@ -1,5 +1,5 @@
-const { questClient } = require("../../microserviceClient");
 const Response = require("../utilities/response");
+const { questClient, withSecretHeaders } = require("../../microserviceClient");
 
 // POST /api/quests/generate
 async function generateQuest(req, res) {
@@ -35,4 +35,25 @@ async function submitQuest(req, res) {
   }
 }
 
-module.exports = { generateQuest, submitQuest };
+async function generateInternalQuest(req, res) {
+  try {
+    const { data } = await questClient.post(
+      "/quests/generate-internal",
+      req.body,
+      withSecretHeaders()
+    );
+    return res
+      .status(201)
+      .json(new Response(true, 201, "Internal quest generated", data));
+  } catch (err) {
+    console.error("generateInternalQuest error:", err.message);
+    const status = err.response?.status || 500;
+    const detail =
+      err.response?.data?.detail || "Failed to generate internal quest";
+    return res
+      .status(status)
+      .json(new Response(false, status, detail, null));
+  }
+}
+
+module.exports = { generateQuest, submitQuest, generateInternalQuest };
