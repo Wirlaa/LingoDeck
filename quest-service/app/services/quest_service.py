@@ -1,19 +1,29 @@
 """
-Quest service — SKELETON.
+Quest service — core business logic.
 
-Implement all functions marked with raise NotImplementedError.
-The full implementation is in the full/ version for reference.
+Quest generation uses a two-tier approach:
 
-Two-tier quest generation:
-  Tier 1 — wordbank (should be the default, fastest path)
-  Tier 2 — LLM fallback via llm_client.py (when wordbank has no match)
+  TIER 1 — Wordbank (default, instant)
+    Picks a sentence from language_content, blanks the target word,
+    pulls 3 distractors from other rows. Zero LLM cost.
+    Used for ~95% of normal gameplay.
+
+  TIER 2 — LLM fallback (when wordbank has no good match)
+    Triggered when:
+      - No wordbank content matches the requested scenario_tag
+      - The caller explicitly passes use_llm=True
+    Uses llm_client.py to call either Anthropic or Ollama depending on config.
+    Takes 1-5 seconds but generates fresh, context-aware content.
 
 Scoring:
-  Exact string match, case-insensitive.
-  Correct → pack_score 0.5-1.0 (pack awarded)
-  Wrong   → pack_score 0.0-0.4 (no pack)
+  Exact string match (case-insensitive) against the stored correct_answer.
+  Multiple choice means fuzzy matching is unnecessary — the options shown
+  are the exact strings from the DB, so the player can only submit one of them.
 
-IMPORTANT: all options returned to the player must be lowercase.
+Pack scores:
+  Correct → random float 0.5-1.0 (above threshold → pack awarded)
+  Wrong   → random float 0.0-0.4 (below threshold → no pack)
+  Threshold: PACK_AWARD_THRESHOLD = 0.5
 """
 
 import random
@@ -25,8 +35,33 @@ from sqlalchemy.sql.expression import func
 
 from app.models.language_content import LanguageContent
 from app.models.quest import Quest, QuestSubmission
+from app.services import llm_client
 
+# Player must score >= this to earn a card pack
 PACK_AWARD_THRESHOLD = 0.50
+
+# Prompt templates for LLM fallback
+_LLM_SYSTEM = (
+    "You are a Finnish language learning content generator. "
+    "Respond with valid JSON only. No markdown, no explanation."
+)
+
+_LLM_PROMPT = """Generate a Finnish fill-in-the-blank exercise.
+Use the word "{word}" in a sentence about: {scenario}.
+Difficulty: {difficulty} (0.0=easy, 1.0=hard)
+
+IMPORTANT: "target_fi" must appear exactly in "sentence_fi".
+
+Return ONLY this JSON:
+{{
+  "sentence_fi": "Finnish sentence containing {word}",
+  "sentence_en": "English translation",
+  "target_fi": "{word}",
+  "target_en": "English meaning of {word}",
+  "distractor_1_fi": "wrong Finnish word 1",
+  "distractor_2_fi": "wrong Finnish word 2",
+  "distractor_3_fi": "wrong Finnish word 3"
+}}"""
 
 
 async def generate_quest(
@@ -39,42 +74,20 @@ async def generate_quest(
     """
     Generate one fill-in-the-blank quest.
 
-    TODO:
-      1. If use_llm=False, call _pick_content() to get a LanguageContent row
-      2. If a row is found, call _build_from_wordbank()
-      3. If no row found OR use_llm=True, call _build_from_llm()
-      4. Return the Quest
+    Tries the wordbank first. Falls back to LLM if:
+      - No wordbank content matches the filters
+      - use_llm=True is explicitly passed
 
-    Hint: all options must be lowercase (use .lower() when building options).
+    Returns a persisted Quest row (correct_answer is stored but never returned to the player).
     """
-    content = None
-    print(f"llm_use={use_llm} scenario_tag={scenario_tag} difficulty_target={difficulty_target}")
-    # 1. Try DB content if not forcing LLM
-    if use_llm is False:
-        content = await _pick_content(
-            db=db,
-            user_id=user_id,
-            scenario_tag=scenario_tag,
-            difficulty_target=difficulty_target,
-        )
+    # Try wordbank first unless LLM is explicitly requested
+    if not use_llm:
+        content = await _pick_content(db, scenario_tag, difficulty_target)
+        if content:
+            return await _build_from_wordbank(db, content)
 
-    # 2. If content found → build from wordbank
-    if content is not None:
-        quest = await _build_from_wordbank(db, content)
-
-    # 3. Otherwise → fallback to LLM
-    else:
-        quest = await _build_from_llm(
-            db=db,
-            scenario=scenario_tag or "general",
-            difficulty=difficulty_target or 0.5,
-        )
-
-    # 4. Ensure all options are lowercase
-    if hasattr(quest, "options") and quest.options:
-        quest.options = [opt.lower() for opt in quest.options]
-
-    return quest
+    # Fallback: LLM generation
+    return await _build_from_llm(db, scenario_tag or "general", difficulty_target or 0.3)
 
 
 async def score_answer(
@@ -86,107 +99,73 @@ async def score_answer(
     """
     Score a player's answer and persist the submission.
 
-    TODO:
-      1. Fetch the Quest row by quest_id (raise ValueError if not found)
-      2. Compare quest.correct_answer.lower() == given_answer.lower()
-      3. Compute xp and pack_score using _compute_xp() and _compute_pack_score()
-      4. Create and add a QuestSubmission row
-      5. Return (quest, submission)
+    Returns (quest, submission) so the router can build QuestResult.
+    Raises ValueError if the quest does not exist.
     """
     result = await db.execute(select(Quest).where(Quest.id == quest_id))
-    quest = result.scalars().first()
+    quest = result.scalar_one_or_none()
     if quest is None:
-        raise ValueError(f"Quest not found: {quest_id}")
+        raise ValueError(f"Quest {quest_id} not found")
 
-    is_correct = quest.correct_answer.lower() == given_answer.lower()
-    xp_earned = _compute_xp(is_correct)
+    is_correct = quest.correct_answer.strip().lower() == given_answer.strip().lower()
+    xp = _compute_xp(is_correct)
     pack_score = _compute_pack_score(is_correct)
 
     submission = QuestSubmission(
-        quest_id=quest.id,
+        id=uuid.uuid4(),
+        quest_id=quest_id,
         user_id=user_id,
         given_answer=given_answer,
         is_correct=is_correct,
-        xp_earned=xp_earned,
+        xp_earned=xp,
         pack_score=pack_score,
     )
     db.add(submission)
-    await db.flush()
     return quest, submission
 
 
-# ── Private helpers — implement these ─────────────────────────────────────────
+# ── Private helpers ────────────────────────────────────────────────────────────
 
 async def _pick_content(
     db: AsyncSession,
-    user_id: str,
     scenario_tag: str | None,
     difficulty_target: float | None,
 ) -> LanguageContent | None:
-    """
-    Pick one active LanguageContent row matching the filters.
-    Return None if nothing matches (triggers LLM fallback).
+    """Pick one LanguageContent row, return None if nothing matches."""
+    query = select(LanguageContent).where(LanguageContent.is_active.is_(True))
 
-    TODO:
-      - If difficulty_target: fetch 5 nearest rows, pick randomly
-      - If scenario_tag: filter by scenario_tags.contains(tag)
-      - Otherwise: random active row
-    """
-    query = select(LanguageContent).where(LanguageContent.is_active == True)
-
-    # Filter by scenario_tag if provided
     if scenario_tag:
         query = query.where(LanguageContent.scenario_tags.contains(scenario_tag))
 
-    # If difficulty_target provided, get 5 nearest by difficulty
     if difficulty_target is not None:
-        # Get rows with difficulty closest to target (within ±0.2 range)
-        min_diff = max(0.0, difficulty_target - 0.2)
-        max_diff = min(1.0, difficulty_target + 0.2)
+        # Pick the 5 rows nearest to the target difficulty, then choose randomly
+        # This gives variety while staying close to the requested difficulty
+        query = query.order_by(
+            func.abs(LanguageContent.difficulty - difficulty_target)
+        ).limit(5)
+        result = await db.execute(query)
+        rows = result.scalars().all()
+        return random.choice(rows) if rows else None
 
-        query = query.where(
-            LanguageContent.difficulty >= min_diff,
-            LanguageContent.difficulty <= max_diff
-        ).order_by(func.abs(LanguageContent.difficulty - difficulty_target)).limit(5)
-    else:
-        # No difficulty filter, just get all matching rows
-        pass
-
+    query = query.order_by(func.random()).limit(1)
     result = await db.execute(query)
-    candidates = result.scalars().all()
-
-    # print(f"_pick_content found {len(candidates)} candidates for user_id={user_id}, "
-    #       f"scenario_tag={scenario_tag}, difficulty_target={difficulty_target}")
-
-    if not candidates:
-        return None
-
-    # Pick randomly from candidates
-    # print(f"_pick_content candidates: {random.choice(candidates)}")
-    return random.choice(candidates)
+    return result.scalar_one_or_none()
 
 
 async def _build_from_wordbank(db: AsyncSession, content: LanguageContent) -> Quest:
-    """
-    Build a Quest from a LanguageContent row.
-
-    TODO:
-      1. Replace target_fi in sentence_fi with .... → question_fi
-      2. Replace target_en in sentence_en with .... → question_en
-      3. Call _build_options() to get 4 lowercase shuffled options
-      4. Persist and return Quest with source="wordbank"
-    """
-    question_fi = content.sentence_fi.replace(content.target_fi, "....")
-    question_en = content.sentence_en.replace(content.target_en, "....")
+    """Build and persist a Quest from a LanguageContent row."""
+    question_fi = content.sentence_fi.replace(content.target_fi, "....", 1)
+    question_en = content.sentence_en.replace(content.target_en, "....", 1)
     options = await _build_options(db, content)
 
     quest = Quest(
+        id=uuid.uuid4(),
         content_id=content.id,
         source="wordbank",
         question_fi=question_fi,
         question_en=question_en,
         options=options,
-        correct_answer=content.target_fi,
+        correct_answer=content.target_fi.lower(),
         difficulty=content.difficulty,
     )
     db.add(quest)
@@ -199,87 +178,51 @@ async def _build_from_llm(
     scenario: str,
     difficulty: float,
 ) -> Quest:
-    """
-    Generate a Quest using the LLM fallback.
-
-    TODO:
-      1. Pick a random word from language_content to seed the LLM prompt
-      2. Call llm_client.generate_quest_json(prompt, system)
-      3. Validate: target_fi must appear in sentence_fi
-      4. Lowercase all options
-      5. Persist and return Quest with source="llm"
-      6. Retry up to 3 times on failure
-    """
-    from app.services import llm_client
-
-    # Pick a random word from language_content to seed the prompt
+    """Generate a Quest using the LLM fallback. Validates output before persisting."""
+    # For LLM fallback we need a target word — pick one from the wordbank
+    # even if scenario doesn't match, just to seed the generation
     result = await db.execute(
         select(LanguageContent.target_fi)
-        .where(LanguageContent.is_active == True)
+        .where(LanguageContent.is_active.is_(True))
         .order_by(func.random())
         .limit(1)
     )
-    seed_word = result.scalar_one_or_none()
-    if not seed_word:
-        raise RuntimeError("No language content available for LLM seeding")
+    row = result.scalar_one_or_none()
+    word = row if row else "kahvia"
 
-    # Create prompt for LLM
-    system = f"""You are a Finnish language learning assistant. Generate a fill-in-the-blank question about Finnish vocabulary.
+    prompt = _LLM_PROMPT.format(word=word, scenario=scenario, difficulty=difficulty)
 
-The question should be appropriate for difficulty level {difficulty:.1f} (0.0=easy, 1.0=hard).
-Context: {scenario}
-
-Return ONLY valid JSON with this exact format:
-{{
-  "sentence_fi": "Finnish sentence with [TARGET] word to blank out",
-  "sentence_en": "English translation of the sentence",
-  "target_fi": "the Finnish word that gets blanked out",
-  "target_en": "English translation of the target word",
-  "distractors": ["wrong_option1", "wrong_option2", "wrong_option3"]
-}}
-
-Requirements:
-- target_fi must appear exactly once in sentence_fi
-- All distractors must be different Finnish words
-- All options should be lowercase
-- Make it educational and natural"""
-
-    prompt = f"Generate a Finnish fill-in-the-blank question. Use '{seed_word}' as inspiration for the difficulty level. Make sure the target word fits naturally in a sentence."
-
-    # Retry up to 3 times on failure
     for attempt in range(3):
         try:
-            llm_response = await llm_client.generate_quest_json(prompt, system)
+            raw = await llm_client.generate_quest_json(prompt, _LLM_SYSTEM)
 
-            # Validate the response
-            required_keys = ["sentence_fi", "sentence_en", "target_fi", "target_en", "distractors"]
-            if not all(key in llm_response for key in required_keys):
-                raise ValueError(f"LLM response missing required keys: {list(llm_response.keys())}")
+            target_fi = raw["target_fi"]
+            sentence_fi = raw["sentence_fi"]
 
-            sentence_fi = llm_response["sentence_fi"]
-            sentence_en = llm_response["sentence_en"]
-            target_fi = llm_response["target_fi"]
-            target_en = llm_response["target_en"]
-            distractors = llm_response["distractors"]
+            # Validate that target actually appears in sentence
+            if target_fi.lower() not in sentence_fi.lower():
+                continue
 
-            # Validate target_fi appears in sentence_fi
-            if target_fi not in sentence_fi:
-                raise ValueError(f"target_fi '{target_fi}' not found in sentence_fi '{sentence_fi}'")
+            question_fi = sentence_fi.replace(target_fi, "....", 1)
+            question_en = raw["sentence_en"].replace(raw["target_en"], "....", 1)
 
-            # Build the quest
-            question_fi = sentence_fi.replace(target_fi, "....")
-            question_en = sentence_en.replace(target_en, "....")
-
-            # Combine correct answer with distractors and lowercase everything
-            options = [target_fi.lower()] + [d.lower() for d in distractors]
+            # All options lowercase and shuffled
+            options = [
+                target_fi.lower(),
+                raw["distractor_1_fi"].lower(),
+                raw["distractor_2_fi"].lower(),
+                raw["distractor_3_fi"].lower(),
+            ]
             random.shuffle(options)
 
             quest = Quest(
+                id=uuid.uuid4(),
+                content_id=None,   # no wordbank row backing this
                 source="llm",
                 question_fi=question_fi,
                 question_en=question_en,
                 options=options,
-                correct_answer=target_fi,
+                correct_answer=target_fi.lower(),
                 difficulty=difficulty,
             )
             db.add(quest)
@@ -287,78 +230,55 @@ Requirements:
             return quest
 
         except Exception as e:
-            if attempt == 2:  # Last attempt
-                raise RuntimeError(f"LLM quest generation failed after 3 attempts: {e}") from e
-            # Continue to next attempt
+            if attempt == 2:
+                raise RuntimeError(
+                    f"LLM quest generation failed after 3 attempts: {e}"
+                ) from e
+
+    raise RuntimeError("LLM quest generation failed")
 
 
 async def _build_options(db: AsyncSession, content: LanguageContent) -> list[str]:
     """
-    Pull 3 distractor target_fi values, shuffle with correct answer.
-    All options must be lowercase.
-
-    TODO:
-      - Query 3 random target_fi values (exclude current content row)
-      - Pad with ["kahvia","vettä","teetä",...] if DB is too small
-      - Combine with content.target_fi.lower()
-      - Shuffle and return
+    Pull 3 distractor target_fi values and shuffle with the correct answer.
+    All options are lowercased for consistency.
+    Falls back to hardcoded Finnish fillers if the DB is too small.
     """
-    query = (
+    result = await db.execute(
         select(LanguageContent.target_fi)
         .where(
-            LanguageContent.is_active == True,
+            LanguageContent.is_active.is_(True),
             LanguageContent.id != content.id,
+            LanguageContent.target_fi != content.target_fi,
         )
         .order_by(func.random())
-        .limit(6)
+        .limit(3)
     )
-    result = await db.execute(query)
-    distractors = [
-        target.lower()
-        for target in result.scalars().all()
-        if target and target.lower() != content.target_fi.lower()
-    ]
+    distractors = [r.lower() for r in result.scalars().all()]
 
-    unique_distractors: list[str] = []
-    for item in distractors:
-        if item not in unique_distractors:
-            unique_distractors.append(item)
-        if len(unique_distractors) >= 3:
-            break
+    # Pad with common Finnish words if not enough distractors
+    fillers = ["kahvia", "vettä", "teetä", "maitoa", "ruokaa", "leipää"]
+    while len(distractors) < 3:
+        f = random.choice(fillers).lower()
+        if f not in distractors and f != content.target_fi.lower():
+            distractors.append(f)
 
-    fallback = [
-        "kahvia",
-        "vettä",
-        "teetä",
-        "maitoa",
-        "leipää",
-        "omenaa",
-        "kirjaa",
-        "aamua",
-        "kahvi",
-        "uima",
-    ]
-    for pad in fallback:
-        if len(unique_distractors) >= 3:
-            break
-        if pad not in unique_distractors and pad != content.target_fi.lower():
-            unique_distractors.append(pad)
-
-    options = [content.target_fi.lower(), *unique_distractors[:3]]
+    options = distractors + [content.target_fi.lower()]
     random.shuffle(options)
     return options
 
 
 def _compute_xp(is_correct: bool) -> int:
-    """Return 10 XP for correct, 2 XP for trying."""
+    """10 XP for correct, 2 XP for trying."""
     return 10 if is_correct else 2
 
 
 def _compute_pack_score(is_correct: bool) -> float:
     """
-    Correct: random float in [0.50, 1.00]
-    Wrong:   random float in [0.00, 0.40]
+    Pack score determines card rarity when a pack is awarded.
+    Correct: 0.5-1.0 (always above threshold → pack awarded)
+    Wrong:   0.0-0.4 (always below threshold → no pack)
     """
     if is_correct:
-        return random.uniform(0.50, 1.00)
-    return random.uniform(0.00, 0.40)
+        return round(random.uniform(0.50, 1.00), 4)
+    return round(random.uniform(0.00, 0.40), 4)
