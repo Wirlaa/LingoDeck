@@ -1,8 +1,14 @@
 """
-Challenge Service entry point.
+Challenge Service v2 — battle meter, hand system, support card effects.
 
-Handles KELA boss fights only.
-Generates questions via LLM at fight start, then runs locally.
+Changes from v1:
+  - HP bars replaced with battle meter (-100 to +100)
+  - Hand/draw/discard pile card management
+  - Support card effects (shield, boost, focus, retry, combo)
+  - Scenario bonuses for deck building
+  - Deterministic fallback for LLM failures
+  - Strict question validation (target in deck, no dupes)
+  - Fully separated: llm_client → question_engine → battle_engine → session_store
 """
 
 from contextlib import asynccontextmanager
@@ -29,11 +35,11 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
 
 app = FastAPI(
-    title=settings.APP_NAME,
-    version=settings.APP_VERSION,
+    title=f"{settings.APP_NAME} v2",
+    version="0.2.0",
     description=(
-        "Challenge Service — KELA boss fight manager. "
-        "Generates questions via LLM (Anthropic or Ollama) at fight start."
+        "Challenge Service v2 — battle meter, hand system, support card effects, "
+        "scenario bonuses, and deterministic fallback generation."
     ),
     lifespan=lifespan,
 )
@@ -52,4 +58,14 @@ app.include_router(challenges.router)
 
 @app.get("/", tags=["root"])
 async def root() -> dict:
-    return {"service": settings.APP_NAME, "version": settings.APP_VERSION}
+    return {
+        "service": settings.APP_NAME,
+        "version": "0.2.0",
+        "changes": [
+            "Battle meter replaces HP bars",
+            "Hand/draw/discard card management",
+            "Support card effects: shield, boost, focus, retry, combo",
+            "Scenario bonuses for deck building",
+            "Deterministic fallback generation",
+        ],
+    }

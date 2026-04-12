@@ -1,5 +1,5 @@
 """
-Finnish language seed data 50 sentences.
+Finnish language seed data — 50 sentences.
 
 Each entry maps to one LanguageContent row.
 The challenge is built by replacing target_fi in sentence_fi with ----
@@ -11,11 +11,16 @@ Difficulty bands:
   Rare       0.45 - 0.60   verb conjugations, basic cases
   Epic       0.65 - 0.80   partitive, compound nouns, conditionals
   Legendary  0.85 - 1.00   case rections, idioms, bureaucratic Finnish
+
+Content types:
+  noun    concrete picturable object
+  phrase  functional word / expression / directional formula
+  idiom   compound, bureaucratic, or figurative expression
 """
 
 SEED_DATA: list[dict] = [
 
-    # Common
+    # ── Common ────────────────────────────────────────────────────────────────
 
     {
         "sentence_fi": "Haluaisin kupillisen kahvia, kiitos.",
@@ -25,6 +30,7 @@ SEED_DATA: list[dict] = [
         "difficulty": 0.10,
         "rarity": "Common",
         "scenario_tags": "cafe_order",
+        "content_type": "noun",
     },
     {
         "sentence_fi": "Yksi tee, kiitos.",
@@ -34,6 +40,7 @@ SEED_DATA: list[dict] = [
         "difficulty": 0.10,
         "rarity": "Common",
         "scenario_tags": "cafe_order",
+        "content_type": "noun",
     },
     {
         "sentence_fi": "Saanko lasillisen vettä?",
@@ -43,6 +50,7 @@ SEED_DATA: list[dict] = [
         "difficulty": 0.12,
         "rarity": "Common",
         "scenario_tags": "cafe_order",
+        "content_type": "noun",
     },
     {
         "sentence_fi": "Paljonko tämä maksaa?",
@@ -52,6 +60,7 @@ SEED_DATA: list[dict] = [
         "difficulty": 0.15,
         "rarity": "Common",
         "scenario_tags": "cafe_order",
+        "content_type": "phrase",
     },
     {
         "sentence_fi": "Kiitos paljon, hyvää päivänjatkoa!",
@@ -61,6 +70,7 @@ SEED_DATA: list[dict] = [
         "difficulty": 0.08,
         "rarity": "Common",
         "scenario_tags": "cafe_order",
+        "content_type": "phrase",
     },
 
     {
@@ -71,6 +81,7 @@ SEED_DATA: list[dict] = [
         "difficulty": 0.08,
         "rarity": "Common",
         "scenario_tags": "asking_directions",
+        "content_type": "phrase",
     },
     {
         "sentence_fi": "Mene suoraan eteenpäin.",
@@ -80,6 +91,7 @@ SEED_DATA: list[dict] = [
         "difficulty": 0.14,
         "rarity": "Common",
         "scenario_tags": "asking_directions",
+        "content_type": "phrase",
     },
     {
         "sentence_fi": "Käänny vasemmalle liikennevaloissa.",
@@ -89,6 +101,7 @@ SEED_DATA: list[dict] = [
         "difficulty": 0.15,
         "rarity": "Common",
         "scenario_tags": "asking_directions",
+        "content_type": "phrase",
     },
     {
         "sentence_fi": "Asema on oikealla puolella.",
@@ -98,6 +111,7 @@ SEED_DATA: list[dict] = [
         "difficulty": 0.15,
         "rarity": "Common",
         "scenario_tags": "asking_directions",
+        "content_type": "phrase",
     },
     {
         "sentence_fi": "Se on aivan lähellä.",
@@ -107,6 +121,7 @@ SEED_DATA: list[dict] = [
         "difficulty": 0.13,
         "rarity": "Common",
         "scenario_tags": "asking_directions",
+        "content_type": "phrase",
     },
 
     {
@@ -117,15 +132,17 @@ SEED_DATA: list[dict] = [
         "difficulty": 0.18,
         "rarity": "Common",
         "scenario_tags": "job_interview",
+        "content_type": "noun",
     },
     {
-        "sentence_fi": "Nimeni on Shivansh.",
-        "sentence_en": "My name is Shivansh.",
+        "sentence_fi": "Nimeni on Shivansh ja olen insinööri.",
+        "sentence_en": "My name is Shivansh and I am an engineer.",
         "target_fi": "Nimeni",
         "target_en": "My name",
         "difficulty": 0.10,
         "rarity": "Common",
         "scenario_tags": "job_interview",
+        "content_type": "phrase",
     },
     {
         "sentence_fi": "Olen innostunut tästä mahdollisuudesta.",
@@ -135,6 +152,7 @@ SEED_DATA: list[dict] = [
         "difficulty": 0.20,
         "rarity": "Common",
         "scenario_tags": "job_interview",
+        "content_type": "phrase",
     },
 
     {
@@ -142,113 +160,125 @@ SEED_DATA: list[dict] = [
         "sentence_en": "I need help filling in the form.",
         "target_fi": "apua",
         "target_en": "help",
-        "difficulty": 0.18,
+        "difficulty": 0.12,
         "rarity": "Common",
         "scenario_tags": "kela_boss",
+        "content_type": "noun",
     },
     {
-        "sentence_fi": "Missä on odotushuone?",
-        "sentence_en": "Where is the waiting room?",
+        "sentence_fi": "Odotushuone on täynnä ihmisiä.",
+        "sentence_en": "The waiting room is full of people.",
         "target_fi": "odotushuone",
         "target_en": "waiting room",
-        "difficulty": 0.20,
+        "difficulty": 0.15,
         "rarity": "Common",
         "scenario_tags": "kela_boss",
+        "content_type": "noun",
     },
 
-    #Uncommon
+    # ── Uncommon ──────────────────────────────────────────────────────────────
 
     {
-        "sentence_fi": "Onko teillä kasvipohjaista maitoa?",
+        "sentence_fi": "Onko teillä kasvispohjaista maitoa?",
         "sentence_en": "Do you have plant-based milk?",
-        "target_fi": "kasvipohjaista",
+        "target_fi": "kasvispohjaista",
         "target_en": "plant-based",
         "difficulty": 0.30,
         "rarity": "Uncommon",
         "scenario_tags": "cafe_order",
+        "content_type": "phrase",
     },
     {
-        "sentence_fi": "Haluaisin myös pienen leivonnaisen.",
-        "sentence_en": "I would also like a small pastry.",
+        "sentence_fi": "Otan yhden leivonnaisen kahvin kanssa.",
+        "sentence_en": "I will take one pastry with the coffee.",
         "target_fi": "leivonnaisen",
         "target_en": "pastry",
         "difficulty": 0.28,
         "rarity": "Uncommon",
         "scenario_tags": "cafe_order",
+        "content_type": "noun",
     },
     {
-        "sentence_fi": "Voinko maksaa kortilla?",
+        "sentence_fi": "Voiko maksaa kortilla?",
         "sentence_en": "Can I pay by card?",
         "target_fi": "kortilla",
         "target_en": "by card",
-        "difficulty": 0.27,
+        "difficulty": 0.32,
         "rarity": "Uncommon",
         "scenario_tags": "cafe_order",
+        "content_type": "phrase",
     },
     {
-        "sentence_fi": "Saako tähän ottaa mukaan?",
-        "sentence_en": "Can this be taken away?",
+        "sentence_fi": "Saanko tämän mukaan?",
+        "sentence_en": "Can I get this to go?",
         "target_fi": "mukaan",
         "target_en": "away",
-        "difficulty": 0.32,
+        "difficulty": 0.35,
         "rarity": "Uncommon",
         "scenario_tags": "cafe_order",
+        "content_type": "phrase",
     },
 
     {
-        "sentence_fi": "Kuinka kauan kestää kävellä sinne?",
-        "sentence_en": "How long does it take to walk there?",
+        "sentence_fi": "Voit kävellä sinne viidessä minuutissa.",
+        "sentence_en": "You can walk there in five minutes.",
         "target_fi": "kävellä",
         "target_en": "walk",
+        "difficulty": 0.25,
+        "rarity": "Uncommon",
+        "scenario_tags": "asking_directions",
+        "content_type": "phrase",
+    },
+    {
+        "sentence_fi": "Se on kävelymatkan päässä.",
+        "sentence_en": "It is within walking distance.",
+        "target_fi": "kävelymatkan",
+        "target_en": "walking distance",
+        "difficulty": 0.38,
+        "rarity": "Uncommon",
+        "scenario_tags": "asking_directions",
+        "content_type": "phrase",
+    },
+    {
+        "sentence_fi": "Bussi vie sinut suoraan keskustaan.",
+        "sentence_en": "The bus takes you straight to the city centre.",
+        "target_fi": "keskustaan",
+        "target_en": "city centre",
         "difficulty": 0.30,
         "rarity": "Uncommon",
         "scenario_tags": "asking_directions",
-    },
-    {
-        "sentence_fi": "Onko se kävelymatkan päässä?",
-        "sentence_en": "Is it within walking distance?",
-        "target_fi": "kävelymatkan",
-        "target_en": "walking distance",
-        "difficulty": 0.35,
-        "rarity": "Uncommon",
-        "scenario_tags": "asking_directions",
-    },
-    {
-        "sentence_fi": "Meneekö tämä bussi keskustaan?",
-        "sentence_en": "Does this bus go to the city centre?",
-        "target_fi": "keskustaan",
-        "target_en": "city centre",
-        "difficulty": 0.32,
-        "rarity": "Uncommon",
-        "scenario_tags": "asking_directions",
+        "content_type": "phrase",
     },
 
     {
-        "sentence_fi": "Minulla on kolmen vuoden kokemus alalta.",
-        "sentence_en": "I have three years of experience in the field.",
+        "sentence_fi": "Minulla on viiden vuoden kokemus alalta.",
+        "sentence_en": "I have five years of experience in the field.",
         "target_fi": "kokemus",
         "target_en": "experience",
+        "difficulty": 0.28,
+        "rarity": "Uncommon",
+        "scenario_tags": "job_interview",
+        "content_type": "noun",
+    },
+    {
+        "sentence_fi": "Olen hyvä tiimipelaaja.",
+        "sentence_en": "I am a good team player.",
+        "target_fi": "tiimipelaaja",
+        "target_en": "team player",
         "difficulty": 0.35,
         "rarity": "Uncommon",
         "scenario_tags": "job_interview",
+        "content_type": "idiom",
     },
     {
-        "sentence_fi": "Olen tiimipelaaja ja pidän yhteistyöstä.",
-        "sentence_en": "I am a team player and enjoy collaboration.",
-        "target_fi": "tiimipelaaja",
-        "target_en": "team player",
-        "difficulty": 0.30,
-        "rarity": "Uncommon",
-        "scenario_tags": "job_interview",
-    },
-    {
-        "sentence_fi": "Mikä on työn aloituspäivä?",
-        "sentence_en": "What is the start date of the job?",
+        "sentence_fi": "Mikä olisi mahdollinen aloituspäivä?",
+        "sentence_en": "What would be a possible start date?",
         "target_fi": "aloituspäivä",
         "target_en": "start date",
-        "difficulty": 0.33,
+        "difficulty": 0.38,
         "rarity": "Uncommon",
         "scenario_tags": "job_interview",
+        "content_type": "noun",
     },
 
     {
@@ -259,36 +289,40 @@ SEED_DATA: list[dict] = [
         "difficulty": 0.40,
         "rarity": "Uncommon",
         "scenario_tags": "kela_boss",
+        "content_type": "idiom",
     },
     {
-        "sentence_fi": "Tarvitsen todistuksen työnantajaltani.",
-        "sentence_en": "I need a certificate from my employer.",
+        "sentence_fi": "Tarvitsen lääkäriltä todistuksen.",
+        "sentence_en": "I need a certificate from the doctor.",
         "target_fi": "todistuksen",
         "target_en": "certificate",
-        "difficulty": 0.38,
+        "difficulty": 0.35,
         "rarity": "Uncommon",
         "scenario_tags": "kela_boss",
+        "content_type": "noun",
     },
 
-    #Rare
+    # ── Rare ──────────────────────────────────────────────────────────────────
 
     {
-        "sentence_fi": "Voisitteko lämmittää tämän uudelleen?",
-        "sentence_en": "Could you heat this up again?",
+        "sentence_fi": "Voitteko lämmittää tämän minulle?",
+        "sentence_en": "Could you heat this up for me?",
         "target_fi": "lämmittää",
         "target_en": "heat up",
-        "difficulty": 0.50,
+        "difficulty": 0.48,
         "rarity": "Rare",
         "scenario_tags": "cafe_order",
+        "content_type": "phrase",
     },
     {
-        "sentence_fi": "Onko kahvissa laktoosia?",
+        "sentence_fi": "Sisältääkö kahvi laktoosia?",
         "sentence_en": "Does the coffee contain lactose?",
         "target_fi": "laktoosia",
         "target_en": "lactose",
         "difficulty": 0.48,
         "rarity": "Rare",
         "scenario_tags": "cafe_order",
+        "content_type": "noun",
     },
 
     {
@@ -299,6 +333,7 @@ SEED_DATA: list[dict] = [
         "difficulty": 0.52,
         "rarity": "Rare",
         "scenario_tags": "asking_directions",
+        "content_type": "noun",
     },
     {
         "sentence_fi": "Sinun täytyy ylittää silta ensin.",
@@ -308,6 +343,7 @@ SEED_DATA: list[dict] = [
         "difficulty": 0.48,
         "rarity": "Rare",
         "scenario_tags": "asking_directions",
+        "content_type": "phrase",
     },
     {
         "sentence_fi": "Ota metro linjalla yksi.",
@@ -317,6 +353,7 @@ SEED_DATA: list[dict] = [
         "difficulty": 0.45,
         "rarity": "Rare",
         "scenario_tags": "asking_directions",
+        "content_type": "noun",
     },
 
     {
@@ -327,6 +364,7 @@ SEED_DATA: list[dict] = [
         "difficulty": 0.58,
         "rarity": "Rare",
         "scenario_tags": "job_interview",
+        "content_type": "idiom",
     },
     {
         "sentence_fi": "Olen valmis oppimaan uusia taitoja.",
@@ -336,6 +374,7 @@ SEED_DATA: list[dict] = [
         "difficulty": 0.50,
         "rarity": "Rare",
         "scenario_tags": "job_interview",
+        "content_type": "noun",
     },
     {
         "sentence_fi": "Mikä on palkkahaarukka tälle tehtävälle?",
@@ -345,6 +384,7 @@ SEED_DATA: list[dict] = [
         "difficulty": 0.55,
         "rarity": "Rare",
         "scenario_tags": "job_interview",
+        "content_type": "idiom",
     },
 
     {
@@ -355,6 +395,7 @@ SEED_DATA: list[dict] = [
         "difficulty": 0.60,
         "rarity": "Rare",
         "scenario_tags": "kela_boss",
+        "content_type": "idiom",
     },
     {
         "sentence_fi": "Tarvitsen lisää liitteitä hakemukseeni.",
@@ -364,9 +405,10 @@ SEED_DATA: list[dict] = [
         "difficulty": 0.55,
         "rarity": "Rare",
         "scenario_tags": "kela_boss",
+        "content_type": "noun",
     },
 
-    # EPic
+    # ── Epic ──────────────────────────────────────────────────────────────────
 
     {
         "sentence_fi": "Voisinko saada kupongin seuraavaa käyntiä varten?",
@@ -376,6 +418,7 @@ SEED_DATA: list[dict] = [
         "difficulty": 0.70,
         "rarity": "Epic",
         "scenario_tags": "cafe_order",
+        "content_type": "noun",
     },
     {
         "sentence_fi": "Onko teillä gluteenittomia vaihtoehtoja?",
@@ -385,6 +428,7 @@ SEED_DATA: list[dict] = [
         "difficulty": 0.68,
         "rarity": "Epic",
         "scenario_tags": "cafe_order",
+        "content_type": "phrase",
     },
 
     {
@@ -395,6 +439,7 @@ SEED_DATA: list[dict] = [
         "difficulty": 0.72,
         "rarity": "Epic",
         "scenario_tags": "asking_directions",
+        "content_type": "noun",
     },
     {
         "sentence_fi": "Linja-autopysäkki on kadun toisella puolella.",
@@ -404,6 +449,7 @@ SEED_DATA: list[dict] = [
         "difficulty": 0.75,
         "rarity": "Epic",
         "scenario_tags": "asking_directions",
+        "content_type": "noun",
     },
 
     {
@@ -414,6 +460,7 @@ SEED_DATA: list[dict] = [
         "difficulty": 0.78,
         "rarity": "Epic",
         "scenario_tags": "job_interview",
+        "content_type": "idiom",
     },
     {
         "sentence_fi": "Voisin aloittaa kahden viikon irtisanomisajan jälkeen.",
@@ -423,6 +470,7 @@ SEED_DATA: list[dict] = [
         "difficulty": 0.75,
         "rarity": "Epic",
         "scenario_tags": "job_interview",
+        "content_type": "idiom",
     },
 
     {
@@ -433,9 +481,10 @@ SEED_DATA: list[dict] = [
         "difficulty": 0.80,
         "rarity": "Epic",
         "scenario_tags": "kela_boss",
+        "content_type": "phrase",
     },
 
-    # Legendary
+    # ── Legendary ─────────────────────────────────────────────────────────────
 
     {
         "sentence_fi": "Haen perustoimeentulotukea ensimmäistä kertaa tänä vuonna.",
@@ -445,6 +494,7 @@ SEED_DATA: list[dict] = [
         "difficulty": 0.97,
         "rarity": "Legendary",
         "scenario_tags": "kela_boss",
+        "content_type": "idiom",
     },
     {
         "sentence_fi": "Ystävällisesti pyydän teitä vahvistamaan hakemukseni vastaanoton.",
@@ -454,6 +504,7 @@ SEED_DATA: list[dict] = [
         "difficulty": 0.88,
         "rarity": "Legendary",
         "scenario_tags": "kela_boss,job_interview",
+        "content_type": "phrase",
     },
     {
         "sentence_fi": "Käyttäytyäkseen asiallisesti hänen täytyy hallita kieltä.",
@@ -463,6 +514,7 @@ SEED_DATA: list[dict] = [
         "difficulty": 0.92,
         "rarity": "Legendary",
         "scenario_tags": "job_interview",
+        "content_type": "idiom",
     },
     {
         "sentence_fi": "Työsopimuksessa mainitaan koeajan pituus ja irtisanomisehdot.",
@@ -472,6 +524,7 @@ SEED_DATA: list[dict] = [
         "difficulty": 0.90,
         "rarity": "Legendary",
         "scenario_tags": "job_interview",
+        "content_type": "idiom",
     },
     {
         "sentence_fi": "Mennään kahvilaan ennen kokousta.",
@@ -481,5 +534,6 @@ SEED_DATA: list[dict] = [
         "difficulty": 0.85,
         "rarity": "Legendary",
         "scenario_tags": "cafe_order",
+        "content_type": "idiom",
     },
 ]

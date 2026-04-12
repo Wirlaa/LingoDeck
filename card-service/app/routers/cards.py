@@ -58,6 +58,7 @@ async def open_card_pack(
             rarity=c.rarity,
             difficulty=c.difficulty,
             power=c.power,
+            content_type=c.content_type,
         )
         for c in pack
     ]
