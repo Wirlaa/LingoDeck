@@ -1,7 +1,7 @@
 services:
   db:
     image: postgres:17.4
-    container_name: postgres_db
+    container_name: backend_auth_db
     restart: always
 
     environment:

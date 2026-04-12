@@ -1,6 +1,37 @@
+#
+# Lingo Deck — Python Microservices
+#
+# ONE shared PostgreSQL database, THREE FastAPI services.
+# All services connect to the same DB instance on the internal Docker network.
+#
+# Ports (external):
+#   5433  → PostgreSQL
+#   8001  → quest-service
+#   8002  → card-service
+#   8003  → challenge-service
+#
+# First time setup:
+#   1. cp .env.example .env  (fill in secrets)
+#   2. docker compose up
+#   3. curl -X POST http://localhost:8001/admin/seed \
+#        -H "x-service-secret: <your_secret>"
+#
+# LLM deployment options:
+#   Option A (local/VPS with Ollama):
+#     Set LLM_BACKEND=ollama, install Ollama on the host, pull a model.
+#     Services call Ollama at OLLAMA_HOST (default: host.docker.internal:11434).
+#
+#   Option B (cloud with Anthropic):
+#     Set LLM_BACKEND=anthropic and ANTHROPIC_API_KEY in .env.
+#     No extra setup needed.
+#
+#   Option C (auto-detect):
+#     Set LLM_BACKEND=auto (default).
+#     Uses Anthropic if API key is present, else falls back to Ollama.
+
 services:
 
-  # ── Shared database for Python microservices (lingo-db) ──────────────────────
+  # ── Shared database ──────────────────────────────────────────────────────────
   db:
     image: postgres:16-alpine
     container_name: lingo-db
@@ -45,7 +76,7 @@ services:
 
   # ── Card Service (8002) ──────────────────────────────────────────────────────
   card-service:
-    build:
+    build: 
       context: .
       dockerfile: card-service/Dockerfile
     container_name: lingo-card-service
@@ -89,50 +120,6 @@ services:
     # extra_hosts:
     #   - "host.docker.internal:host-gateway"
     restart: unless-stopped
-
-  # ── Game Backend (4000) ──────────────────────────────────────────────────────
-  game-backend:
-    build:
-      context: ./game-backend
-      dockerfile: Dockerfile
-    container_name: game-backend
-    env_file:
-      - ./game-backend/.env.docker
-    ports:
-      - "4000:4000"
-    depends_on:
-      quest-service:
-        condition: service_started
-      card-service:
-        condition: service_started
-      challenge-service:
-        condition: service_started
-    networks:
-      - lingo-net
-    restart: unless-stopped
-
-  # ── Backend Postgres for Node auth API (5434) ────────────────────────────────
-  backend-db:
-    image: postgres:17.4
-    container_name: backend_auth_db
-    restart: always
-    environment:
-      TZ: Europe/Helsinki
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: projectdb
-    ports:
-      - "5434:5432"   # backend/.env expects DB_PORT=5434, DB_HOST=localhost
-    volumes:
-      - ./backend/database/init.sql:/docker-entrypoint-initdb.d/init.sql
-      - ./backend/db_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user -d projectdb"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - lingo-net
 
 volumes:
   db-data:
