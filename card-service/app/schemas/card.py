@@ -5,6 +5,11 @@ CardOut — one card returned from a pack opening.
   Node.js receives these and saves them to the user's inventory.
   This service generates them but does NOT persist them.
 
+  content_type drives the frontend card layout:
+    noun   → image emoji + word + sentence + translation
+    phrase → usage context + word + meaning
+    idiom  → literal meaning → actual meaning + example
+
 PackOpenRequest — sent by Node.js after a successful quest submission.
 PackOpenResult  — returned to Node.js with the rolled cards.
 """
@@ -22,6 +27,7 @@ class CardOut(BaseModel):
     rarity: str
     difficulty: float
     power: int              # damage value in boss fights
+    content_type: str       # "noun" | "phrase" | "idiom"
 
 
 class PackOpenRequest(BaseModel):
