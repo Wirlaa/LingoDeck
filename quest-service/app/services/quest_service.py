@@ -282,3 +282,33 @@ def _compute_pack_score(is_correct: bool) -> float:
     if is_correct:
         return round(random.uniform(0.50, 1.00), 4)
     return round(random.uniform(0.00, 0.40), 4)
+
+
+# ── Score quest — added for challenge tracker integration ──────────────────────
+
+async def score_quest(db, quest_id: str, given_answer: str) -> dict:
+    """Score a submitted quest answer. Raises ValueError if quest not found."""
+    import uuid as _uuid
+    from sqlalchemy import select
+    from app.models.quest import Quest
+
+    try:
+        qid = _uuid.UUID(quest_id)
+    except ValueError:
+        raise ValueError(f"Invalid quest_id: {quest_id}")
+
+    result = await db.execute(select(Quest).where(Quest.id == qid))
+    quest = result.scalar_one_or_none()
+    if quest is None:
+        raise ValueError(f"Quest {quest_id} not found.")
+
+    is_correct = quest.correct_answer.strip().lower() == given_answer.strip().lower()
+    return {
+        "quest_id":      quest_id,
+        "is_correct":    is_correct,
+        "correct_answer": quest.correct_answer,
+        "given_answer":  given_answer,
+        "xp_earned":     1 if is_correct else 0,
+        "target_word_fi": quest.target_word_fi,
+        "scenario":      quest.scenario,
+    }

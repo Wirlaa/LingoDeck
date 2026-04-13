@@ -1,11 +1,13 @@
-shared/README.md — Shared Models
+# shared/
 
-Files here are identical across quest-service and card-service.
-They are copied into each service at Docker build time via docker-compose
-build context, so each container gets its own copy but there is only
-one source of truth in the repo.
+Canonical SQLAlchemy models used by quest-service and card-service.
 
-To update a shared model: edit the file here, then run:
-  docker compose up --build
+The Dockerfiles for those services copy these files over the per-service
+stubs at build time:
 
-Do NOT edit the copies inside quest-service or card-service directly.
+    COPY shared/ ./shared/
+    RUN cp shared/models/language_content.py app/models/language_content.py && \
+        cp shared/models/base.py app/models/base.py
+
+During local dev (outside Docker) the per-service stubs are identical so
+imports work either way.

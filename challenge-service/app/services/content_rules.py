@@ -17,7 +17,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 
 
-# Scenarios 
+# ── Scenarios ──────────────────────────────────────────────────────────────────
+
 class Scenario(str, Enum):
     CAFE_ORDER      = "cafe_order"
     JOB_INTERVIEW   = "job_interview"
@@ -98,7 +99,8 @@ SCENARIO_INFO: dict[str, dict] = {
 }
 
 
-# ─Tags
+# ── Tags ───────────────────────────────────────────────────────────────────────
+
 class Tag(str, Enum):
     # Content tags
     POLITENESS   = "politeness"
@@ -129,7 +131,7 @@ SCENARIO_STRONG_TAGS: dict[str, list[str]] = {
 SCENARIO_BONUS_MULTIPLIER = 1.5
 
 
-# Card effect
+# ── Card effects ───────────────────────────────────────────────────────────────
 
 class EffectType(str, Enum):
     NONE    = "none"
@@ -159,7 +161,7 @@ RISK_BY_RARITY: dict[str, float] = {
 }
 
 
-# meter
+# ── Battle meter ───────────────────────────────────────────────────────────────
 
 @dataclass
 class MeterConfig:
@@ -180,7 +182,8 @@ class MeterConfig:
 DEFAULT_METER_CONFIG = MeterConfig()
 
 
-# Difficulty rules 
+# ── Difficulty rules ───────────────────────────────────────────────────────────
+
 def difficulty_to_rarity(difficulty: float) -> str:
     """Convert a difficulty float to a rarity string."""
     if difficulty <= 0.20: return "Common"
@@ -202,7 +205,7 @@ def rarity_to_difficulty_band(rarity: str) -> tuple[float, float]:
     return bands.get(rarity, (0.0, 1.0))
 
 
-# Question templates (deterministic fallback) 
+# ── Question templates (deterministic fallback) ────────────────────────────────
 
 # Used when LLM generation fails — guarantees valid questions for demos/grading.
 # Keyed by scenario, each template has a sentence with {word} placeholder.

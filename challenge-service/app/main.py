@@ -1,22 +1,7 @@
-"""
-Challenge Service v2 — battle meter, hand system, support card effects.
-
-Changes from v1:
-  - HP bars replaced with battle meter (-100 to +100)
-  - Hand/draw/discard pile card management
-  - Support card effects (shield, boost, focus, retry, combo)
-  - Scenario bonuses for deck building
-  - Deterministic fallback for LLM failures
-  - Strict question validation (target in deck, no dupes)
-  - Fully separated: llm_client → question_engine → battle_engine → session_store
-"""
-
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
 from app.core.config import get_settings
 from app.core.database import engine
 from app.models import base, challenge_session, challenge_question  # noqa: F401
@@ -35,12 +20,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
 
 app = FastAPI(
-    title=f"{settings.APP_NAME} v2",
-    version="0.2.0",
-    description=(
-        "Challenge Service v2 — battle meter, hand system, support card effects, "
-        "scenario bonuses, and deterministic fallback generation."
-    ),
+    title=settings.APP_NAME,
+    version="2.0.0",
+    description="Big battle system — meter-based, star-scaled, 4 scenarios.",
     lifespan=lifespan,
 )
 
@@ -57,15 +39,11 @@ app.include_router(challenges.router)
 
 
 @app.get("/", tags=["root"])
-async def root() -> dict:
+async def root():
     return {
         "service": settings.APP_NAME,
-        "version": "0.2.0",
-        "changes": [
-            "Battle meter replaces HP bars",
-            "Hand/draw/discard card management",
-            "Support card effects: shield, boost, focus, retry, combo",
-            "Scenario bonuses for deck building",
-            "Deterministic fallback generation",
-        ],
+        "version": "2.0.0",
+        "battle_system": "meter -100 to +100",
+        "star_scaling": "1★=±8/15  2★=±12/22  3★=±15/28  4★=±20/35",
+        "scenarios": ["cafe_order", "asking_directions", "job_interview", "kela_boss"],
     }

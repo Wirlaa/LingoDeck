@@ -1,14 +1,9 @@
 """
 Base SQLAlchemy model — every table inherits from this.
-
-Gives every row a UUID primary key, created_at, and updated_at.
-Timestamps are set by the database server, not by Python, so they
-are reliable even if clock drift occurs between service instances.
+UUID primary key, server-side created_at and updated_at.
 """
-
 import uuid
 from datetime import datetime
-
 from sqlalchemy import DateTime, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 

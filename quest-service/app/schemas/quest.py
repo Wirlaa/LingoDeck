@@ -1,50 +1,40 @@
-"""
-Pydantic schemas for the quest router.
-
-QuestOut never includes correct_answer — it stays hidden until submission.
-QuestResult reveals correct_answer after the player has answered.
-"""
-
-import uuid
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 
 class QuestGenerateRequest(BaseModel):
-    """Sent by Node.js to request a new quest."""
     user_id: str
-    scenario_tag: str | None = None          # filter wordbank by scenario
-    difficulty_target: float | None = None   # 0.0-1.0, pick nearest available
+    scenario_tag: str | None = None
+    difficulty_target: float | None = None
 
 
-class QuestOut(BaseModel):
-    """
-    Returned to the player via Node.js after generating a quest.
-    correct_answer is deliberately excluded — never expose it here.
-    """
-    id: uuid.UUID
-    question_fi: str    # e.g. "Haluaisin kupillisen ...., kiitos."
-    question_en: str    # e.g. "I would like a cup of ...., please."
-    options: list[str]  # 4 lowercase options already shuffled
+class QuestSubmitRequest(BaseModel):
+    user_id: str
+    quest_id: str
+    given_answer: str
+    # Current streak passed in from game-backend (it tracks this across submissions)
+    current_streak: int = 0
+
+
+class QuestResponse(BaseModel):
+    quest_id: str
+    question_fi: str
+    question_en: str
+    options: list[str]
     difficulty: float
-    source: str         # "wordbank" | "llm" — useful for debugging
+    scenario: str
+    target_word_fi: str
 
     model_config = {"from_attributes": True}
 
 
-class QuestSubmitRequest(BaseModel):
-    """Sent by Node.js when the player picks an answer."""
-    quest_id: uuid.UUID
-    user_id: str
-    given_answer: str   # must be one of the 4 options
-
-
-class QuestResult(BaseModel):
-    """Returned after scoring the player's answer."""
-    quest_id: uuid.UUID
-    correct_answer: str  # now revealed
-    given_answer: str
+class QuestResultResponse(BaseModel):
+    quest_id: str
     is_correct: bool
-    feedback: str        # "Correct!" or "The answer was kahvia."
-    xp_earned: int
-    pack_score: float = Field(ge=0.0, le=1.0)
-    pack_awarded: bool   # True if pack_score >= 0.5
+    correct_answer: str
+    given_answer: str
+    xp_earned: int           # XP to apply to the card (1 if correct, 0 if wrong)
+    target_word_fi: str      # word to add XP to in card-service
+    scenario: str
+
+    # Challenge updates — game-backend reads these and opens packs if needed
+    completed_challenges: list[dict]

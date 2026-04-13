@@ -1,70 +1,65 @@
-"""
-Cards router.
-
-POST /cards/open-pack → roll a pack and return cards to Node.js
-
-Called by Node.js immediately after a quest submission where pack_awarded=True.
-Node.js is responsible for saving the returned cards to the user's inventory.
-This service only generates and returns them.
-"""
-
+"""Card routes — pack opening, collection, XP, battle eligibility."""
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core.database import get_db
-from app.schemas.card import CardOut, PackOpenRequest, PackOpenResult
-from app.services.rarity_engine import PackCard, open_pack
+from app.schemas.card import PackOpenRequest, CardXpRequest
+from app.services import card_service
 
 router = APIRouter(prefix="/cards", tags=["cards"])
 
 
-@router.post("/open-pack", response_model=PackOpenResult)
-async def open_card_pack(
-    body: PackOpenRequest,
+@router.post("/open-pack")
+async def open_pack(body: PackOpenRequest, db: AsyncSession = Depends(get_db)):
+    """
+    Open a card pack for a user.
+    Returns PACK_SIZE card results (new cards or XP if duplicate).
+    """
+    await card_service.ensure_cafe_unlocked(db, body.user_id)
+    cards = await card_service.open_pack(db, body.user_id, body.scenario_bias)
+    return {"cards": cards, "pack_size": len(cards)}
+
+
+@router.get("/collection/{user_id}")
+async def get_collection(user_id: str, db: AsyncSession = Depends(get_db)):
+    """Get the user's full card collection with star levels and XP."""
+    cards = await card_service.get_collection(db, user_id)
+    return {"user_id": user_id, "cards": cards, "total": len(cards)}
+
+
+@router.get("/collection/{user_id}/scenario/{scenario}")
+async def get_collection_by_scenario(
+    user_id: str,
+    scenario: str,
     db: AsyncSession = Depends(get_db),
-) -> PackOpenResult:
+):
+    """Get cards for a specific scenario — useful for deck building UI."""
+    all_cards = await card_service.get_collection(db, user_id)
+    scenario_cards = [c for c in all_cards if c["scenario"] == scenario]
+    return {"user_id": user_id, "scenario": scenario, "cards": scenario_cards}
+
+
+@router.post("/xp")
+async def add_xp(body: CardXpRequest, db: AsyncSession = Depends(get_db)):
     """
-    Roll a pack of cards.
-
-    pack_score from the quest result controls rarity distribution:
-      0.5-0.6  → mostly Common and Uncommon
-      0.6-0.8  → mix of all rarities
-      0.8-1.0  → higher chance of Rare, Epic, Legendary
-
-    Cards are NOT saved here — Node.js handles inventory persistence.
+    Add XP to a card. Called by game-backend after:
+      - correct quest answer (xp=1)
+      - correct battle answer (xp=2)
+    Returns updated card info including whether a star-up occurred.
     """
-    try:
-        pack: list[PackCard] = await open_pack(
-            db,
-            pack_score=body.pack_score,
-            scenario_tags=body.scenario_tags,
-        )
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc)) from exc
+    result = await card_service.add_xp(db, body.user_id, body.word_fi, body.xp)
+    if result is None:
+        return {"updated": False, "reason": "Card not found in collection"}
+    return {"updated": True, **result}
 
-    if not pack:
-        raise HTTPException(
-            status_code=404,
-            detail="No language content available. Run quest-service /admin/seed first.",
-        )
 
-    cards_out = [
-        CardOut(
-            content_id=c.content_id,
-            sentence_fi=c.sentence_fi,
-            sentence_en=c.sentence_en,
-            target_fi=c.target_fi,
-            target_en=c.target_en,
-            rarity=c.rarity,
-            difficulty=c.difficulty,
-            power=c.power,
-            content_type=c.content_type,
-        )
-        for c in pack
-    ]
-
-    return PackOpenResult(
-        pack_score=body.pack_score,
-        cards=cards_out,
-        legendary_pulled=any(c.rarity == "Legendary" for c in cards_out),
-    )
+@router.get("/battle-ready/{user_id}/{scenario}")
+async def get_battle_deck(
+    user_id: str,
+    scenario: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Check if user can enter the big battle for a scenario.
+    Returns eligible deck if they meet the requirement, or reason why not.
+    """
+    return await card_service.get_battle_deck(db, user_id, scenario)
