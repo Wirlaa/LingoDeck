@@ -1,5 +1,6 @@
 """Quest — one generated fill-in-the-blank question instance."""
 import uuid
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy import Float, String, Text
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
@@ -10,6 +11,7 @@ class Quest(Base):
     __tablename__ = "quests"
 
     user_id:        Mapped[str]   = mapped_column(String(128), nullable=False, index=True)
+    content_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True, index=True)
     scenario:       Mapped[str]   = mapped_column(String(64),  nullable=False, default="general")
     question_fi:    Mapped[str]   = mapped_column(Text,        nullable=False)
     question_en:    Mapped[str]   = mapped_column(Text,        nullable=False)
