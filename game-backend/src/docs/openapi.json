@@ -1,0 +1,54 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "LingoDeck Game Backend",
+    "version": "1.0.0",
+    "description": "Middleman between frontend and Python microservices"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:4000",
+      "description": "Local game-backend"
+    }
+  ],
+  "paths": {
+    "/api/quests/generate": {
+      "post": {
+        "summary": "Generate a quest",
+        "tags": ["Quests"],
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "user_id": { "type": "string" },
+                  "scenario_tag": { "type": "string", "nullable": true },
+                  "difficulty_target": { "type": "number", "format": "float", "nullable": true }
+                },
+                "required": ["user_id"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Quest generated"
+          }
+        }
+      }
+    }
+    
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}

@@ -16,7 +16,7 @@ source field:
 import uuid
 
 from sqlalchemy import Float, String, Text
-from sqlalchemy.dialects.postgresql import ARRAY, UUID
+from sqlalchemy.dialects.postgresql import ARRAY, UUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base
@@ -43,6 +43,13 @@ class ChallengeQuestion(Base):
     correct_answer: Mapped[str] = mapped_column(String(256), nullable=False)
 
     difficulty: Mapped[float] = mapped_column(Float, nullable=False)
+
+      # Tags for effect matching (combo, scenario bonus)
+    tags: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
+
+    # Which deck card generated this question
+    deck_card_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    deck_word_fi: Mapped[str | None] = mapped_column(String(256), nullable=True)
 
     def __repr__(self) -> str:
         return (
