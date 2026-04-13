@@ -84,7 +84,7 @@ async def generate_quest(
     if not use_llm:
         content = await _pick_content(db, scenario_tag, difficulty_target)
         if content:
-            return await _build_from_wordbank(db, content)
+            return await _build_from_wordbank(db, content, user_id)
 
     # Fallback: LLM generation
     return await _build_from_llm(db, scenario_tag or "general", difficulty_target or 0.3)
@@ -152,14 +152,14 @@ async def _pick_content(
     return result.scalar_one_or_none()
 
 
-async def _build_from_wordbank(db: AsyncSession, content: LanguageContent) -> Quest:
+async def _build_from_wordbank(db, content, user_id: str = ""):
     """Build and persist a Quest from a LanguageContent row."""
     question_fi = content.sentence_fi.replace(content.target_fi, "....", 1)
     question_en = content.sentence_en.replace(content.target_en, "....", 1)
     options = await _build_options(db, content)
 
     quest = Quest(
-        id=uuid.uuid4(),
+        user_id=user_id,
         content_id=content.id,
         source="wordbank",
         question_fi=question_fi,
