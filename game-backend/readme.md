@@ -72,13 +72,30 @@ Environment variables are loaded via `config.js`.
 ### Local Development
 
 ```
-.env
+.env file with the following text:
+PORT = 4000
+
+QUEST_SERVICE_URL = http://localhost:8001
+CARD_SERVICE_URL = http://localhost:8002
+USER_SERVICE_URL = http://localhost:8003
+AUTH_SERVICE_URL = http://localhost:3000/api
+
+SERVICE_SHARED_SECRET= change-me-to-something-long-and-random
+
 ```
 
 ### Docker
 
 ```
-.env.docker
+.env.docker file with the following text
+PORT = 4000
+
+QUEST_SERVICE_URL = http://localhost:8001
+CARD_SERVICE_URL = http://localhost:8002
+USER_SERVICE_URL = http://localhost:8003
+AUTH_SERVICE_URL = http://localhost:3000/api
+
+SERVICE_SHARED_SECRET= change-me-to-something-long-and-random
 ```
 
 ### CORS
