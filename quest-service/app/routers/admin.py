@@ -34,7 +34,8 @@ async def seed(request: Request, db: AsyncSession = Depends(get_db)):
             select(LanguageContent).where(LanguageContent.target_fi == entry["target_fi"])
         )
         if existing.scalar_one_or_none() is None:
-            db.add(LanguageContent(id=uuid.uuid4(), **entry))
+            clean = {k: v for k, v in entry.items() if k != "content_type"}
+            db.add(LanguageContent(id=uuid.uuid4(), **clean))
             inserted += 1
     await db.flush()
     return {"inserted": inserted, "total_seed": len(SEED_DATA)}
