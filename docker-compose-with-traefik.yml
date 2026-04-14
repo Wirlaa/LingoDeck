@@ -1,0 +1,67 @@
+services:
+  traefik:
+    image: traefik:v3.6.10
+    command:
+      - "--configFile=/app/configs/traefik.toml"
+    volumes:
+      - ./traefik/traefik.toml:/app/configs/traefik.toml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:rw
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.localhost`)"
+      - "traefik.http.routers.traefik.entrypoints=websecure"
+      - "traefik.http.routers.traefik.tls=true"
+      - "traefik.http.routers.traefik.service=api@internal"
+    environment:
+      - TZ=Europe/Helsinki
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - lingo-net
+
+  # Only labels here – definitions come from docker-compose.yml
+  game-backend:
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.game.rule=Host(`api.localhost`)"
+      - "traefik.http.routers.game.entrypoints=websecure"
+      - "traefik.http.routers.game.tls=true"
+      - "traefik.http.services.game.loadbalancer.server.port=4000"
+
+  backend:
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.auth.rule=Host(`auth.localhost`)"
+      - "traefik.http.routers.auth.entrypoints=websecure"
+      - "traefik.http.routers.auth.tls=true"
+      - "traefik.http.services.auth.loadbalancer.server.port=3000"
+
+  quest-service:
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.quest.rule=Host(`quest.localhost`)"
+      - "traefik.http.routers.quest.entrypoints=websecure"
+      - "traefik.http.routers.quest.tls=true"
+      - "traefik.http.services.quest.loadbalancer.server.port=8001"
+
+  card-service:
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.card.rule=Host(`card.localhost`)"
+      - "traefik.http.routers.card.entrypoints=websecure"
+      - "traefik.http.routers.card.tls=true"
+      - "traefik.http.services.card.loadbalancer.server.port=8002"
+
+  challenge-service:
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.challenge.rule=Host(`challenge.localhost`)"
+      - "traefik.http.routers.challenge.entrypoints=websecure"
+      - "traefik.http.routers.challenge.tls=true"
+      - "traefik.http.services.challenge.loadbalancer.server.port=8003"
+
+networks:
+  lingo-net:
+    name: lingo-net
+    driver: bridge

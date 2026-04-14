@@ -1,16 +1,51 @@
 // game-backend/tests/test-microservices.js
 // Run with:  node tests/microTest.js
-// Prereq: backend (port 3000), game-backend (port 4000),
-//         and all Python services (db, quest, card, challenge) running.
+//
+// Modes:
+//   Direct (no Traefik):
+//     node tests/microTest.js
+//
+//   Via Traefik hostnames (HTTPS):
+//     # e.g. hosts: 127.0.0.1 auth.localhost api.localhost
+//     # on Windows PowerShell:
+//     $env:USE_TRAEFIK="true"
+//     $env:NODE_TLS_REJECT_UNAUTHORIZED="0"
+//     node tests/microTest.js
 
 const http = require("http");
+const https = require("https");
 
-const AUTH_PORT = 3000;   // Node auth backend (backend/)
-const GAME_PORT = 4000;   // game-backend
+// When USE_TRAEFIK=true, talk to Traefik hostnames over HTTPS:443.
+// Otherwise, hit the raw container ports on localhost.
+const USE_TRAEFIK = process.env.USE_TRAEFIK === "true";
 
-function httpJsonRequest({ hostname, port, path, method, body, headers = {} }) {
+// For local Traefik:
+//   - auth backend   → https://auth.localhost
+//   - game-backend   → https://api.localhost
+// For cloud, set these via env to your real domains, e.g.
+//   AUTH_HOST=auth.yourdomain.com
+//   GAME_HOST=api.yourdomain.com
+const AUTH_HOST =
+  process.env.AUTH_HOST || (USE_TRAEFIK ? "auth.localhost" : "localhost");
+const GAME_HOST =
+  process.env.GAME_HOST || (USE_TRAEFIK ? "api.localhost" : "localhost");
+
+const AUTH_PORT = Number(process.env.AUTH_PORT) || (USE_TRAEFIK ? 443 : 3000);
+const GAME_PORT = Number(process.env.GAME_PORT) || (USE_TRAEFIK ? 443 : 4000);
+
+// Core request helper; supports HTTP and HTTPS.
+function httpJsonRequest({
+  hostname,
+  port,
+  path,
+  method,
+  body,
+  headers = {},
+  useHttps = false,
+}) {
   return new Promise((resolve, reject) => {
     const data = body ? JSON.stringify(body) : null;
+    const client = useHttps ? https : http;
 
     const options = {
       hostname,
@@ -22,9 +57,14 @@ function httpJsonRequest({ hostname, port, path, method, body, headers = {} }) {
         ...(data ? { "Content-Length": Buffer.byteLength(data) } : {}),
         ...headers,
       },
+      // For local Traefik with self-signed certs you can run the test with:
+      //   NODE_TLS_REJECT_UNAUTHORIZED=0
+      ...(useHttps && process.env.NODE_TLS_REJECT_UNAUTHORIZED === "0"
+        ? { rejectUnauthorized: false }
+        : {}),
     };
 
-    const req = http.request(options, (res) => {
+    const req = client.request(options, (res) => {
       let rawData = "";
 
       res.on("data", (chunk) => {
@@ -56,10 +96,21 @@ function httpJsonRequest({ hostname, port, path, method, body, headers = {} }) {
 
 // Convenience wrappers
 function authRequest(opts) {
-  return httpJsonRequest({ hostname: "localhost", port: AUTH_PORT, ...opts });
+  return httpJsonRequest({
+    hostname: AUTH_HOST,
+    port: AUTH_PORT,
+    useHttps: USE_TRAEFIK,
+    ...opts,
+  });
 }
+
 function gameRequest(opts) {
-  return httpJsonRequest({ hostname: "localhost", port: GAME_PORT, ...opts });
+  return httpJsonRequest({
+    hostname: GAME_HOST,
+    port: GAME_PORT,
+    useHttps: USE_TRAEFIK,
+    ...opts,
+  });
 }
 
 // --- Auth helpers (reuse backend flow) --------------------------------------
@@ -431,6 +482,12 @@ async function testChallenges(token, userId) {
 async function run() {
   try {
     console.log("--- Microservice end-to-end test via game-backend ---");
+    console.log(
+      `Mode: ${USE_TRAEFIK ? "Traefik (HTTPS)" : "Direct (localhost ports)"}`,
+    );
+    console.log(
+      `Auth → ${AUTH_HOST}:${AUTH_PORT}, Game → ${GAME_HOST}:${GAME_PORT}`,
+    );
 
     // 1) Get JWT from auth backend
     const { newUser, credentials } = await registerUserViaAuth();
