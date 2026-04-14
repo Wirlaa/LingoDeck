@@ -7,6 +7,8 @@ from app.core.database import engine
 from app.models import base, user_card, scenario_unlock  # noqa: F401
 from app.models.base import Base
 from app.routers import admin, cards, scenarios
+from app.models.user_card import UserCard
+from app.models.scenario_unlock import ScenarioUnlock
 
 settings = get_settings()
 
@@ -14,7 +16,9 @@ settings = get_settings()
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     async with engine.begin() as conn:
-        await conn.run_sync(lambda conn: Base.metadata.create_all(conn, checkfirst=True))
+        # Only create card-service owned tables — language_content is owned by quest-service
+        await conn.run_sync(UserCard.__table__.create, checkfirst=True)
+        await conn.run_sync(ScenarioUnlock.__table__.create, checkfirst=True)
     yield
     await engine.dispose()
 
