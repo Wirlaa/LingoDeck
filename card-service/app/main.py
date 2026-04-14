@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import get_settings
 from app.core.database import engine
-from app.models import base, user_card, scenario_unlock, language_content  # noqa: F401
+from app.models import base, user_card, scenario_unlock  # noqa: F401
 from app.models.base import Base
 from app.routers import admin, cards, scenarios
 
