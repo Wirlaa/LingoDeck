@@ -152,7 +152,7 @@ async def _pick_content(
     return result.scalar_one_or_none()
 
 
-async def _build_from_wordbank(db, content, user_id: str = ""):
+async def _build_from_wordbank(db, content, user_id: str = "", scenario_tag:str = ""):
     """Build and persist a Quest from a LanguageContent row."""
     question_fi = content.sentence_fi.replace(content.target_fi, "....", 1)
     question_en = content.sentence_en.replace(content.target_en, "....", 1)
