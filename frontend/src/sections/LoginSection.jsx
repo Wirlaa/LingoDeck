@@ -61,9 +61,7 @@ const LoginSection = () => {
         backgroundPosition: "center",
       }}
     >
-      <div className="absolute inset-0 backdrop-blur-sm" />
-
-      <div className="relative z-10 bg-[#f3e2c7] p-2 rounded-[26px] border-[3px] border-[#d2b48c] shadow-xl w-full max-w-140">
+      <div className=" bg-[#f3e2c7] p-2 rounded-[26px] border-[3px] border-[#d2b48c] shadow-xl w-full max-w-140">
         <div className="relative bg-[#fff4df] rounded-[20px] px-4 sm:px-6 py-8 border-2 border-[#e6cfae]">
           <div className="absolute -top-5 left-1/2 -translate-x-1/2 bg-[#f5d7a1] px-6 py-2 rounded-full border-2 border-[#d2a56d] shadow">
             <h2 className="text-[#8b5a2b] font-bold text-sm">Login</h2>

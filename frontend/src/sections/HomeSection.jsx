@@ -66,12 +66,10 @@ const HomeSection = () => {
       style={{
         backgroundImage: "url(/images/hero.png)",
       }}
-      className="h-screen relative w-full hero-section overflow-hidden flex justify-center items-center px-4 bg-cover bg-center"
+      className="h-screen w-full hero-section overflow-hidden flex justify-center items-center px-4 bg-cover bg-center"
     >
-      <div className="backdrop-blur-xs absolute inset-0 bg-black/10" />
-
       <div>
-        <div className="justify-self-center relative z-10 overflow-hidden hero-title">
+        <div className="justify-self-center  overflow-hidden hero-title">
           <h1
             className="uppercase font-bold text-5xl lg:text-9xl text-[#f5d7a1]"
             style={{ textShadow: "2px 2px 2px black" }}
@@ -82,7 +80,7 @@ const HomeSection = () => {
 
         <div
           style={{ clipPath: "polygon(50% 0, 50% 0, 50% 100%, 50% 100%)" }}
-          className="bg-[#fff4df] border-8 border-[#f3e2c7] -rotate-7 relative z-10 px-4 py-2 hero-subtitle rounded-3xl"
+          className="bg-[#fff4df] border-8 border-[#f3e2c7] -rotate-7 px-4 py-2 hero-subtitle rounded-3xl"
         >
           <h3 className="text-5xl lg:text-9xl uppercase text-[#8b5a2b] font-bold">
             learn + fun
@@ -91,15 +89,15 @@ const HomeSection = () => {
 
         <div className="pt-20 max-w-md justify-self-center overflow-hidden">
           <p
-            className="text-white text-sm lg:text-xl relative z-10 text-center paragraph"
+            className="text-white text-sm lg:text-xl text-center paragraph"
             style={{ textShadow: "2px 2px 2px black" }}
           >
-            Discover the joy of learning languages with our interactive deck!
+            Discover the joy of learning languages with us!
           </p>
         </div>
 
         {isLoggedIn && (
-          <div className="relative z-10 flex justify-center items-center gap-6 mt-10 btns">
+          <div className="flex justify-center items-center gap-6 mt-10 btns">
             <Link
               to="/quest"
               className="bg-[#8b5a2b] border-4 border-[#f3e2c7] 

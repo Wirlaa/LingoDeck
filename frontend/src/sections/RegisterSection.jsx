@@ -56,9 +56,7 @@ const RegisterSection = () => {
         backgroundPosition: "center",
       }}
     >
-      <div className="absolute inset-0 backdrop-blur-sm" />
-
-      <div className="relative z-10 bg-[#e6f2ef] p-2 rounded-[26px] border-[3px] border-[#b7d6cf] shadow-xl w-full max-w-140">
+      <div className=" bg-[#e6f2ef] p-2 rounded-[26px] border-[3px] border-[#b7d6cf] shadow-xl w-full max-w-140">
         <div className="relative bg-[#f4fbf9] rounded-[20px] px-4 sm:px-6 py-8 border-2 border-[#cfe7e2]">
           <div className="absolute -top-5 sm:-top-6 left-1/2 -translate-x-1/2 bg-[#bfe6df] px-4 sm:px-6 py-1.5 sm:py-2 rounded-full border-2 border-[#8fc9bf] shadow">
             <h2 className="text-[#2f6f68] font-bold text-xs sm:text-sm tracking-wide">

@@ -46,12 +46,13 @@ export function Navbar() {
           <div className="flex items-center gap-4">
             {user ? (
               <div className="flex items-center gap-3">
-                <span
+                <Link
+                  to="/profile"
                   className="text-[#f5d7a1] text-sm 
-                  drop-shadow-[1px_1px_0px_#5a3b1a]"
+                  drop-shadow-[1px_1px_0px_#5a3b1a] hover:underline"
                 >
                   Hello, {user.username}
-                </span>
+                </Link>
 
                 <button
                   onClick={handleLogout}
@@ -61,7 +62,7 @@ export function Navbar() {
                   rounded-full py-1 px-5 
                   shadow-[3px_3px_0px_#5a3b1a]
                   transition-all duration-150
-                  hover:translate-x-[2px] hover:translate-y-[2px]
+                  hover:translate-x-0.5 hover:translate-y-0.5
                   hover:shadow-[1px_1px_0px_#5a3b1a]"
                 >
                   logout
@@ -76,7 +77,7 @@ export function Navbar() {
                 rounded-full py-1 px-7 
                 shadow-[3px_3px_0px_#5a3b1a]
                 transition-all duration-150
-                hover:translate-x-[2px] hover:translate-y-[2px]
+                hover:translate-x-0.5 hover:translate-y-0.5
                 hover:shadow-[1px_1px_0px_#5a3b1a]"
               >
                 login
