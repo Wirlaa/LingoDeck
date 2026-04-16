@@ -17,10 +17,12 @@ services:
     ports:
       - "80:80"
       - "443:443"
+      - "8080:8080"
+      - "8082:8082"   # Traefik API/dashboard + Prometheus metrics endpoint
     networks:
       - lingo-net
 
-  # Only labels here – definitions come from docker-compose.yml
+  # Only labels here – service definitions come from docker-compose.yml
   game-backend:
     labels:
       - "traefik.enable=true"
@@ -60,6 +62,24 @@ services:
       - "traefik.http.routers.challenge.entrypoints=websecure"
       - "traefik.http.routers.challenge.tls=true"
       - "traefik.http.services.challenge.loadbalancer.server.port=8003"
+
+  # ── Grafana — routed via Traefik at grafana.localhost ─────────────────────────
+  grafana:
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.grafana.rule=Host(`grafana.localhost`)"
+      - "traefik.http.routers.grafana.entrypoints=websecure"
+      - "traefik.http.routers.grafana.tls=true"
+      - "traefik.http.services.grafana.loadbalancer.server.port=3000"
+
+  # ── Prometheus — routed via Traefik at prometheus.localhost ──────────────────
+  prometheus:
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.prometheus.rule=Host(`prometheus.localhost`)"
+      - "traefik.http.routers.prometheus.entrypoints=websecure"
+      - "traefik.http.routers.prometheus.tls=true"
+      - "traefik.http.services.prometheus.loadbalancer.server.port=9090"
 
 networks:
   lingo-net:

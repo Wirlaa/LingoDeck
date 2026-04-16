@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from prometheus_fastapi_instrumentator import Instrumentator
 from app.core.config import get_settings
 from app.core.database import engine
 from app.models import base, user_card, scenario_unlock  # noqa: F401
@@ -12,16 +13,13 @@ from app.models.scenario_unlock import ScenarioUnlock
 
 settings = get_settings()
 
-
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     async with engine.begin() as conn:
-        # Only create card-service owned tables — language_content is owned by quest-service
         await conn.run_sync(UserCard.__table__.create, checkfirst=True)
         await conn.run_sync(ScenarioUnlock.__table__.create, checkfirst=True)
     yield
     await engine.dispose()
-
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -38,10 +36,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+Instrumentator().instrument(app).expose(app)
+
 app.include_router(admin.router)
 app.include_router(cards.router)
 app.include_router(scenarios.router)
-
 
 @app.get("/", tags=["root"])
 async def root():

@@ -38,7 +38,6 @@ services:
         condition: service_healthy
     networks:
       - lingo-net
-    # Mount source for local dev — remove in production
     volumes:
       - ./quest-service:/app
     restart: unless-stopped
@@ -74,7 +73,6 @@ services:
       - .env
     environment:
       DATABASE_URL: postgresql+asyncpg://lingo:${DB_PASSWORD:-lingo}@db:5432/lingo_db
-      # Quest service is resolved by Docker's internal DNS
       QUEST_SERVICE_URL: http://quest-service:8001
     depends_on:
       db:
@@ -85,9 +83,6 @@ services:
       - lingo-net
     volumes:
       - ./challenge-service:/app
-    # For Ollama access from inside Docker on macOS/Windows:
-    # extra_hosts:
-    #   - "host.docker.internal:host-gateway"
     restart: unless-stopped
 
   # ── Game Backend (4000) ──────────────────────────────────────────────────────
@@ -99,7 +94,6 @@ services:
     env_file:
       - ./game-backend/.env.docker
     environment:
-      # Override to talk to the backend service on the Docker network
       AUTH_SERVICE_URL: http://backend:3000/api
     ports:
       - "4000:4000"
@@ -127,7 +121,7 @@ services:
       POSTGRES_PASSWORD: password
       POSTGRES_DB: projectdb
     ports:
-      - "5434:5432"   # backend/.env expects DB_PORT=5434, DB_HOST=localhost for local dev
+      - "5434:5432"
     volumes:
       - ./backend/database/init.sql:/docker-entrypoint-initdb.d/init.sql
       - ./backend/db_data:/var/lib/postgresql/data
@@ -145,12 +139,9 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: lingo-auth-backend
-    # Reuse existing backend/.env for PORT, DB_USER, DB_PASSWORD, DB_NAME,
-    # SALT_ROUNDS, JWT_SECRET, JWT_EXPIRATION, etc. (no secrets in compose)
     env_file:
       - ./backend/.env
     environment:
-      # Only override wiring so it talks to backend-db over Docker network
       DB_HOST: backend-db
       DB_PORT: 5432
     ports:
@@ -162,8 +153,82 @@ services:
       - lingo-net
     restart: unless-stopped
 
+  # ════════════════════════════════════════════════════════════════════════════
+  # MONITORING STACK
+  # ════════════════════════════════════════════════════════════════════════════
+
+  # ── Prometheus — metrics scraper ─────────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    container_name: lingo-prometheus
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=15d'
+      - '--web.enable-lifecycle'
+    ports:
+      - "9090:9090"
+    networks:
+      - lingo-net
+    restart: unless-stopped
+
+  # ── Loki — log aggregation ────────────────────────────────────────────────────
+  loki:
+    image: grafana/loki:3.1.0
+    container_name: lingo-loki
+    volumes:
+      - ./monitoring/loki-config.yml:/etc/loki/local-config.yaml:ro
+      - loki-data:/loki
+    command: -config.file=/etc/loki/local-config.yaml
+    ports:
+      - "3100:3100"
+    networks:
+      - lingo-net
+    restart: unless-stopped
+
+  # ── Promtail — ships Docker container logs to Loki ───────────────────────────
+  promtail:
+    image: grafana/promtail:3.1.0
+    container_name: lingo-promtail
+    volumes:
+      - ./monitoring/promtail-config.yml:/etc/promtail/config.yml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    command: -config.file=/etc/promtail/config.yml
+    depends_on:
+      - loki
+    networks:
+      - lingo-net
+    restart: unless-stopped
+
+  # ── Grafana — dashboards UI ───────────────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:11.1.0
+    container_name: lingo-grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=lingodeck
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=http://grafana.localhost
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "3001:3000"    # host 3001 to avoid clash with backend's 3000
+    depends_on:
+      - prometheus
+      - loki
+    networks:
+      - lingo-net
+    restart: unless-stopped
+
 volumes:
   db-data:
+  prometheus-data:
+  loki-data:
+  grafana-data:
 
 networks:
   lingo-net:

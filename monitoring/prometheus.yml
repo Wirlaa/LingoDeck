@@ -1,0 +1,40 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+
+  # Traefik — exposes /metrics on its internal API port (8080)
+  - job_name: 'traefik'
+    static_configs:
+      - targets: ['traefik:8082']
+
+  # Node.js auth backend (port 3000)
+  - job_name: 'backend'
+    static_configs:
+      - targets: ['backend:3000']
+    metrics_path: '/metrics'
+
+  # Node.js game orchestrator (port 4000)
+  - job_name: 'game-backend'
+    static_configs:
+      - targets: ['game-backend:4000']
+    metrics_path: '/metrics'
+
+  # FastAPI quest service (port 8001)
+  - job_name: 'quest-service'
+    static_configs:
+      - targets: ['quest-service:8001']
+    metrics_path: '/metrics'
+
+  # FastAPI card service (port 8002)
+  - job_name: 'card-service'
+    static_configs:
+      - targets: ['card-service:8002']
+    metrics_path: '/metrics'
+
+  # FastAPI challenge service (port 8003)
+  - job_name: 'challenge-service'
+    static_configs:
+      - targets: ['challenge-service:8003']
+    metrics_path: '/metrics'
