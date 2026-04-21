@@ -17,6 +17,8 @@ services:
       - "--configFile=/app/configs/traefik.toml"
     volumes:
       - ./traefik/traefik.toml:/app/configs/traefik.toml:ro
+      - ./traefik/dynamic-tls.toml:/app/configs/dynamic-tls.toml:ro
+      - ./traefik/certs:/certs:ro
       - /var/run/docker.sock:/var/run/docker.sock:rw
     labels:
       - "traefik.enable=true"

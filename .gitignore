@@ -7,3 +7,6 @@ backend/db_data/
 __MACOSX/
 backend/db_data/
 .env
+traefik/certs/
+traefik/.pem
+traefik/-key.pem

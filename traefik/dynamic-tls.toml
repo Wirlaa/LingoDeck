@@ -1,0 +1,3 @@
+[[tls.certificates]]
+  certFile = "/certs/lingodeck-local.pem"
+  keyFile  = "/certs/lingodeck-local-key.pem"

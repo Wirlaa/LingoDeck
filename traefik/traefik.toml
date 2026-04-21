@@ -12,6 +12,10 @@
     exposedByDefault = false
     defaultRule = "Host(`{{ trimPrefix `/` .Name }}.localhost`)"
 
+  [providers.file]
+    filename = "/app/configs/dynamic-tls.toml"
+    watch = true
+
 [api]
   dashboard = true
 
