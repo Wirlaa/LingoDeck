@@ -10,3 +10,4 @@ backend/db_data/
 traefik/certs/
 traefik/.pem
 traefik/-key.pem
+*.pem
