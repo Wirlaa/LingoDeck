@@ -12,6 +12,284 @@
     }
   ],
   "paths": {
+    "/api/cards/open-pack": {
+      "post": {
+        "summary": "Open a card pack",
+        "tags": ["Cards"],
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "type": "object" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Pack opened" }
+        }
+      }
+    },
+    "/api/cards/collection/{userId}": {
+      "get": {
+        "summary": "Get full card collection for a user",
+        "tags": ["Cards"],
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Collection fetched" }
+        }
+      }
+    },
+    "/api/cards/collection/{userId}/scenario/{scenario}": {
+      "get": {
+        "summary": "Get card collection for a user and scenario",
+        "tags": ["Cards"],
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "scenario",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Collection fetched" }
+        }
+      }
+    },
+    "/api/cards/xp": {
+      "post": {
+        "summary": "Add XP to cards",
+        "tags": ["Cards"],
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "type": "object" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "XP added" }
+        }
+      }
+    },
+    "/api/cards/battle-ready/{userId}/{scenario}": {
+      "get": {
+        "summary": "Get battle-ready deck for a user and scenario",
+        "tags": ["Cards"],
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "scenario",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Battle-ready deck fetched" }
+        }
+      }
+    },
+    "/api/scenarios/unlocks/{userId}": {
+      "get": {
+        "summary": "Get unlocked scenarios for a user",
+        "tags": ["Scenarios"],
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Unlocks fetched" }
+        }
+      }
+    },
+    "/api/scenarios/unlock": {
+      "post": {
+        "summary": "Unlock a new scenario for a user",
+        "tags": ["Scenarios"],
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "type": "object" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Scenario unlocked" }
+        }
+      }
+    },
+    "/api/challenges/scenarios": {
+      "get": {
+        "summary": "Get available challenge scenarios",
+        "tags": ["Challenges"],
+        "responses": {
+          "200": {
+            "description": "Scenarios fetched",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "boolean" },
+                    "code": { "type": "integer" },
+                    "message": { "type": "string" },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "value": { "type": "string" },
+                          "label": { "type": "string" },
+                          "description": { "type": "string" }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/challenges/start": {
+      "post": {
+        "summary": "Start a new challenge battle",
+        "tags": ["Challenges"],
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "type": "object" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Challenge started" }
+        }
+      }
+    },
+    "/api/challenges/{sessionId}/action": {
+      "post": {
+        "summary": "Submit an action for a challenge session",
+        "tags": ["Challenges"],
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "type": "object" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Action processed, challenge state returned" }
+        }
+      }
+    },
+    "/api/challenges/{sessionId}": {
+      "get": {
+        "summary": "Get current state of a challenge session",
+        "tags": ["Challenges"],
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Challenge state fetched" }
+        }
+      }
+    },
+    "/api/challenges/{sessionId}/pre-turn": {
+      "post": {
+        "summary": "Run pre-turn effects for a challenge session",
+        "tags": ["Challenges"],
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "type": "object" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Pre-turn processed" }
+        }
+      }
+    },
+    "/api/challenges/{sessionId}/hand": {
+      "get": {
+        "summary": "Get current hand for a challenge session",
+        "tags": ["Challenges"],
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Hand fetched" }
+        }
+      }
+    },
     "/api/quests/generate": {
       "post": {
         "summary": "Generate a quest",
@@ -26,7 +304,11 @@
                 "properties": {
                   "user_id": { "type": "string" },
                   "scenario_tag": { "type": "string", "nullable": true },
-                  "difficulty_target": { "type": "number", "format": "float", "nullable": true }
+                  "difficulty_target": {
+                    "type": "number",
+                    "format": "float",
+                    "nullable": true
+                  }
                 },
                 "required": ["user_id"]
               }
@@ -34,13 +316,111 @@
           }
         },
         "responses": {
-          "201": {
-            "description": "Quest generated"
+          "201": { "description": "Quest generated" }
+        }
+      }
+    },
+    "/api/quests/generate-internal": {
+      "post": {
+        "summary": "Generate an internal quest (service-to-service)",
+        "tags": ["Quests"],
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "type": "object" }
+            }
           }
+        },
+        "responses": {
+          "201": { "description": "Internal quest generated" }
+        }
+      }
+    },
+    "/api/quests/submit": {
+      "post": {
+        "summary": "Submit quest results for scoring",
+        "tags": ["Quests"],
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "type": "object" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Quest scored" }
+        }
+      }
+    },
+    "/api/quests/challenges/{userId}": {
+      "get": {
+        "summary": "Get quest-related challenges for a user",
+        "tags": ["Quests"],
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Challenges fetched" }
+        }
+      }
+    },
+    "/api/admin/quest/health": {
+      "get": {
+        "summary": "Quest service health check",
+        "tags": ["Admin"],
+        "responses": {
+          "200": { "description": "OK" }
+        }
+      }
+    },
+    "/api/admin/quest/seed": {
+      "post": {
+        "summary": "Seed quest service content",
+        "tags": ["Admin"],
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Seed complete" }
+        }
+      }
+    },
+    "/api/admin/quest/content": {
+      "get": {
+        "summary": "Fetch quest service content",
+        "tags": ["Admin"],
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Content fetched" }
+        }
+      }
+    },
+    "/api/admin/card/health": {
+      "get": {
+        "summary": "Card service health check",
+        "tags": ["Admin"],
+        "responses": {
+          "200": { "description": "OK" }
+        }
+      }
+    },
+    "/api/admin/challenge/health": {
+      "get": {
+        "summary": "Challenge service health check",
+        "tags": ["Admin"],
+        "responses": {
+          "200": { "description": "OK" }
         }
       }
     }
-    
   },
   "components": {
     "securitySchemes": {

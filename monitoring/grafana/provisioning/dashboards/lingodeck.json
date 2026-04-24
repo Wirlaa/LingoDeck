@@ -1,0 +1,341 @@
+{
+  "title": "LingoDeck Overview",
+  "uid": "lingodeck-overview",
+  "tags": ["lingodeck"],
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "15s",
+  "time": { "from": "now-1h", "to": "now" },
+  "panels": [
+
+    {
+      "id": 1,
+      "title": "HTTP Request Rate — FastAPI Services",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": { "lineWidth": 2 }
+        }
+      },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" } },
+      "targets": [
+        {
+          "expr": "sum(rate(http_requests_total{job=\"quest-service\"}[1m]))",
+          "legendFormat": "quest-service"
+        },
+        {
+          "expr": "sum(rate(http_requests_total{job=\"card-service\"}[1m]))",
+          "legendFormat": "card-service"
+        },
+        {
+          "expr": "sum(rate(http_requests_total{job=\"challenge-service\"}[1m]))",
+          "legendFormat": "challenge-service"
+        }
+      ]
+    },
+
+    {
+      "id": 2,
+      "title": "HTTP Error Rate (5xx) — FastAPI Services",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "color": { "mode": "fixed", "fixedColor": "red" },
+          "custom": { "lineWidth": 2 }
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(http_requests_total{job=\"quest-service\",status_code=~\"5..\"}[1m]))",
+          "legendFormat": "quest-service errors"
+        },
+        {
+          "expr": "sum(rate(http_requests_total{job=\"card-service\",status_code=~\"5..\"}[1m]))",
+          "legendFormat": "card-service errors"
+        },
+        {
+          "expr": "sum(rate(http_requests_total{job=\"challenge-service\",status_code=~\"5..\"}[1m]))",
+          "legendFormat": "challenge-service errors"
+        }
+      ]
+    },
+
+    {
+      "id": 3,
+      "title": "P95 Request Latency — FastAPI Services",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 8, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": { "lineWidth": 2 }
+        }
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job=\"quest-service\"}[5m])) by (le))",
+          "legendFormat": "quest-service p95"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job=\"card-service\"}[5m])) by (le))",
+          "legendFormat": "card-service p95"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job=\"challenge-service\"}[5m])) by (le))",
+          "legendFormat": "challenge-service p95"
+        }
+      ]
+    },
+
+    {
+      "id": 4,
+      "title": "Traefik — Request Rate by Entrypoint",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 8, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": { "lineWidth": 2 }
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(traefik_entrypoint_requests_total[1m])) by (entrypoint)",
+          "legendFormat": "{{ entrypoint }}"
+        }
+      ]
+    },
+
+    {
+      "id": 5,
+      "title": "Node.js Heap Memory Used",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 16, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "custom": { "lineWidth": 2 }
+        }
+      },
+      "targets": [
+        {
+          "expr": "auth_backend_nodejs_heap_size_used_bytes",
+          "legendFormat": "auth-backend heap"
+        },
+        {
+          "expr": "game_backend_nodejs_heap_size_used_bytes",
+          "legendFormat": "game-backend heap"
+        }
+      ]
+    },
+
+    {
+      "id": 6,
+      "title": "Node.js Event Loop Lag P99",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 16, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": { "lineWidth": 2 },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 0.1 },
+              { "color": "red", "value": 0.5 }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "auth_backend_nodejs_eventloop_lag_p99_seconds",
+          "legendFormat": "auth-backend"
+        },
+        {
+          "expr": "game_backend_nodejs_eventloop_lag_p99_seconds",
+          "legendFormat": "game-backend"
+        }
+      ]
+    },
+
+    {
+      "id": 7,
+      "title": "CPU Usage — All Services",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 24, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "custom": { "lineWidth": 2 }
+        }
+      },
+      "targets": [
+        {
+          "expr": "rate(auth_backend_process_cpu_seconds_total[1m])",
+          "legendFormat": "auth-backend"
+        },
+        {
+          "expr": "rate(game_backend_process_cpu_seconds_total[1m])",
+          "legendFormat": "game-backend"
+        },
+        {
+          "expr": "rate(process_cpu_seconds_total{job=\"quest-service\"}[1m])",
+          "legendFormat": "quest-service"
+        },
+        {
+          "expr": "rate(process_cpu_seconds_total{job=\"card-service\"}[1m])",
+          "legendFormat": "card-service"
+        },
+        {
+          "expr": "rate(process_cpu_seconds_total{job=\"challenge-service\"}[1m])",
+          "legendFormat": "challenge-service"
+        }
+      ]
+    },
+
+    {
+      "id": 8,
+      "title": "Traefik — P95 Latency by Entrypoint",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 24, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": { "lineWidth": 2 }
+        }
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(traefik_entrypoint_request_duration_seconds_bucket[5m])) by (le, entrypoint))",
+          "legendFormat": "{{ entrypoint }} p95"
+        }
+      ]
+    },
+
+    {
+      "id": 9,
+      "title": "Active Requests — Node.js Services",
+      "type": "stat",
+      "gridPos": { "x": 0, "y": 32, "w": 6, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": { "unit": "short" }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "orientation": "horizontal" },
+      "targets": [
+        {
+          "expr": "auth_backend_nodejs_active_requests_total",
+          "legendFormat": "auth-backend"
+        },
+        {
+          "expr": "game_backend_nodejs_active_requests_total",
+          "legendFormat": "game-backend"
+        }
+      ]
+    },
+
+    {
+      "id": 10,
+      "title": "Total Requests (last 1h) — FastAPI",
+      "type": "stat",
+      "gridPos": { "x": 6, "y": 32, "w": 6, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": { "unit": "short" }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "orientation": "horizontal" },
+      "targets": [
+        {
+          "expr": "sum(increase(http_requests_total{job=\"quest-service\"}[1h]))",
+          "legendFormat": "quest"
+        },
+        {
+          "expr": "sum(increase(http_requests_total{job=\"card-service\"}[1h]))",
+          "legendFormat": "card"
+        },
+        {
+          "expr": "sum(increase(http_requests_total{job=\"challenge-service\"}[1h]))",
+          "legendFormat": "challenge"
+        }
+      ]
+    },
+
+    {
+      "id": 11,
+      "title": "Traefik Total Requests (last 1h)",
+      "type": "stat",
+      "gridPos": { "x": 12, "y": 32, "w": 6, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": { "unit": "short" }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [
+        {
+          "expr": "sum(increase(traefik_entrypoint_requests_total[1h]))",
+          "legendFormat": "total"
+        }
+      ]
+    },
+
+    {
+      "id": 12,
+      "title": "Prometheus Scrape Health",
+      "type": "stat",
+      "gridPos": { "x": 18, "y": 32, "w": 6, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "green", "value": 1 }
+            ]
+          },
+          "mappings": [
+            { "type": "value", "options": { "1": { "text": "UP" }, "0": { "text": "DOWN" } } }
+          ]
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "orientation": "horizontal" },
+      "targets": [
+        { "expr": "up{job=\"quest-service\"}", "legendFormat": "quest" },
+        { "expr": "up{job=\"card-service\"}", "legendFormat": "card" },
+        { "expr": "up{job=\"challenge-service\"}", "legendFormat": "challenge" },
+        { "expr": "up{job=\"backend\"}", "legendFormat": "backend" },
+        { "expr": "up{job=\"game-backend\"}", "legendFormat": "game" },
+        { "expr": "up{job=\"traefik\"}", "legendFormat": "traefik" }
+      ]
+    }
+
+  ],
+
+  "templating": {
+    "list": [
+      {
+        "name": "datasource",
+        "type": "datasource",
+        "pluginId": "prometheus",
+        "label": "Datasource",
+        "hide": 0
+      }
+    ]
+  }
+}

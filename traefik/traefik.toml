@@ -1,0 +1,32 @@
+[entryPoints]
+  [entryPoints.web]
+    address = ":80"
+  [entryPoints.websecure]
+    address = ":443"
+  [entryPoints.metrics]
+    address = ":8082"
+
+[providers]
+  [providers.docker]
+    endpoint = "unix:///var/run/docker.sock"
+    exposedByDefault = false
+    defaultRule = "Host(`{{ trimPrefix `/` .Name }}.localhost`)"
+
+  [providers.file]
+    filename = "/app/configs/dynamic-tls.toml"
+    watch = true
+
+[api]
+  dashboard = true
+
+[ping]
+
+[log]
+  level = "DEBUG"
+
+[metrics]
+  [metrics.prometheus]
+    addEntryPointsLabels = true
+    addRoutersLabels     = true
+    addServicesLabels    = true
+    entryPoint           = "metrics"

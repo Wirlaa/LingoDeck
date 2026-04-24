@@ -1,16 +1,51 @@
 // game-backend/tests/test-microservices.js
 // Run with:  node tests/microTest.js
-// Prereq: backend (port 3000), game-backend (port 4000),
-//         and all Python services (db, quest, card, challenge) running.
+//
+// Modes:
+//   Direct (no Traefik):
+//     node tests/microTest.js
+//
+//   Via Traefik hostnames (HTTPS):
+//     # e.g. hosts: 127.0.0.1 auth.localhost api.localhost
+//     # on Windows PowerShell:
+//     $env:USE_TRAEFIK="true"
+//     $env:NODE_TLS_REJECT_UNAUTHORIZED="0"
+//     node tests/microTest.js
 
 const http = require("http");
+const https = require("https");
 
-const AUTH_PORT = 3000;   // Node auth backend (backend/)
-const GAME_PORT = 4000;   // game-backend
+// When USE_TRAEFIK=true, talk to Traefik hostnames over HTTPS:443.
+// Otherwise, hit the raw container ports on localhost.
+const USE_TRAEFIK = process.env.USE_TRAEFIK === "true";
 
-function httpJsonRequest({ hostname, port, path, method, body, headers = {} }) {
+// For local Traefik:
+//   - auth backend   → https://auth.localhost
+//   - game-backend   → https://api.localhost
+// For cloud, set these via env to your real domains, e.g.
+//   AUTH_HOST=auth.yourdomain.com
+//   GAME_HOST=api.yourdomain.com
+const AUTH_HOST =
+  process.env.AUTH_HOST || (USE_TRAEFIK ? "auth.localhost" : "localhost");
+const GAME_HOST =
+  process.env.GAME_HOST || (USE_TRAEFIK ? "api.localhost" : "localhost");
+
+const AUTH_PORT = Number(process.env.AUTH_PORT) || (USE_TRAEFIK ? 443 : 3000);
+const GAME_PORT = Number(process.env.GAME_PORT) || (USE_TRAEFIK ? 443 : 4000);
+
+// Core request helper; supports HTTP and HTTPS.
+function httpJsonRequest({
+  hostname,
+  port,
+  path,
+  method,
+  body,
+  headers = {},
+  useHttps = false,
+}) {
   return new Promise((resolve, reject) => {
     const data = body ? JSON.stringify(body) : null;
+    const client = useHttps ? https : http;
 
     const options = {
       hostname,
@@ -22,9 +57,14 @@ function httpJsonRequest({ hostname, port, path, method, body, headers = {} }) {
         ...(data ? { "Content-Length": Buffer.byteLength(data) } : {}),
         ...headers,
       },
+      // For local Traefik with self-signed certs you can run the test with:
+      //   NODE_TLS_REJECT_UNAUTHORIZED=0
+      ...(useHttps && process.env.NODE_TLS_REJECT_UNAUTHORIZED === "0"
+        ? { rejectUnauthorized: false }
+        : {}),
     };
 
-    const req = http.request(options, (res) => {
+    const req = client.request(options, (res) => {
       let rawData = "";
 
       res.on("data", (chunk) => {
@@ -56,10 +96,21 @@ function httpJsonRequest({ hostname, port, path, method, body, headers = {} }) {
 
 // Convenience wrappers
 function authRequest(opts) {
-  return httpJsonRequest({ hostname: "localhost", port: AUTH_PORT, ...opts });
+  return httpJsonRequest({
+    hostname: AUTH_HOST,
+    port: AUTH_PORT,
+    useHttps: USE_TRAEFIK,
+    ...opts,
+  });
 }
+
 function gameRequest(opts) {
-  return httpJsonRequest({ hostname: "localhost", port: GAME_PORT, ...opts });
+  return httpJsonRequest({
+    hostname: GAME_HOST,
+    port: GAME_PORT,
+    useHttps: USE_TRAEFIK,
+    ...opts,
+  });
 }
 
 // --- Auth helpers (reuse backend flow) --------------------------------------
@@ -134,7 +185,10 @@ async function callQuestAdmin(token) {
     headers: authHeader,
   });
   console.log("Status:", res.statusCode);
-  console.log("Body length:", Array.isArray(res.body?.data) ? res.body.data.length : "n/a");
+  console.log(
+    "Body length:",
+    Array.isArray(res.body?.data) ? res.body.data.length : "n/a"
+  );
 }
 
 async function callCardAdmin() {
@@ -189,20 +243,28 @@ async function testQuests(token, userId) {
 
   if (!questId) {
     console.warn("No quest id from /quests/generate; skipping /quests/submit");
-    return;
+  } else {
+    console.log("\n[GAME] POST /api/quests/submit");
+    const submitReq = {
+      quest_id: questId,
+      user_id: String(userId),
+      given_answer: "test_answer", // likely incorrect, but endpoint should still work
+    };
+    res = await gameRequest({
+      method: "POST",
+      path: "/api/quests/submit",
+      headers: authHeader,
+      body: submitReq,
+    });
+    console.log("Status:", res.statusCode);
+    console.log("Body:", JSON.stringify(res.body, null, 2));
   }
 
-  console.log("\n[GAME] POST /api/quests/submit");
-  const submitReq = {
-    quest_id: questId,
-    user_id: String(userId),
-    given_answer: "test_answer", // likely incorrect, but endpoint should still work
-  };
+  console.log("\n[GAME] GET /api/quests/challenges/:userId");
   res = await gameRequest({
-    method: "POST",
-    path: "/api/quests/submit",
+    method: "GET",
+    path: `/api/quests/challenges/${userId}`,
     headers: authHeader,
-    body: submitReq,
   });
   console.log("Status:", res.statusCode);
   console.log("Body:", JSON.stringify(res.body, null, 2));
@@ -212,16 +274,104 @@ async function testCards(token, userId) {
   const authHeader = { Authorization: `Bearer ${token}` };
 
   console.log("\n[GAME] POST /api/cards/open-pack");
-  const body = {
+  const packReq = {
     user_id: String(userId),
-    pack_score: 0.7,
-    scenario_tags: null,
+    // Bias toward some scenario; can be null as well
+    scenario_bias: "cafe_intro",
   };
-  const res = await gameRequest({
+  let res = await gameRequest({
     method: "POST",
     path: "/api/cards/open-pack",
     headers: authHeader,
-    body,
+    body: packReq,
+  });
+  console.log("Status:", res.statusCode);
+  console.log("Body:", JSON.stringify(res.body, null, 2));
+
+  const packData = res.body && res.body.data;
+  const cards = (packData && packData.cards) || [];
+  const firstCard = cards[0] || {};
+  const cardScenario = firstCard.scenario || "cafe_intro";
+  const cardWordFi = firstCard.word_fi || "sana1";
+
+  console.log("\n[GAME] GET /api/cards/collection/:userId");
+  res = await gameRequest({
+    method: "GET",
+    path: `/api/cards/collection/${userId}`,
+    headers: authHeader,
+  });
+  console.log("Status:", res.statusCode);
+  console.log("Body:", JSON.stringify(res.body, null, 2));
+
+  console.log("\n[GAME] GET /api/cards/collection/:userId/scenario/:scenario");
+  res = await gameRequest({
+    method: "GET",
+    path: `/api/cards/collection/${userId}/scenario/${encodeURIComponent(
+      cardScenario
+    )}`,
+    headers: authHeader,
+  });
+  console.log("Status:", res.statusCode);
+  console.log("Body:", JSON.stringify(res.body, null, 2));
+
+  console.log("\n[GAME] POST /api/cards/xp");
+  res = await gameRequest({
+    method: "POST",
+    path: "/api/cards/xp",
+    headers: authHeader,
+    body: {
+      user_id: String(userId),
+      word_fi: cardWordFi,
+      xp: 1,
+    },
+  });
+  console.log("Status:", res.statusCode);
+  console.log("Body:", JSON.stringify(res.body, null, 2));
+
+  console.log("\n[GAME] GET /api/cards/battle-ready/:userId/:scenario");
+  res = await gameRequest({
+    method: "GET",
+    path: `/api/cards/battle-ready/${userId}/${encodeURIComponent(
+      cardScenario
+    )}`,
+    headers: authHeader,
+  });
+  console.log("Status:", res.statusCode);
+  console.log("Body:", JSON.stringify(res.body, null, 2));
+}
+
+async function testScenarios(token, userId) {
+  const authHeader = { Authorization: `Bearer ${token}` };
+
+  console.log("\n[GAME] GET /api/scenarios/unlocks/:userId");
+  let res = await gameRequest({
+    method: "GET",
+    path: `/api/scenarios/unlocks/${userId}`,
+    headers: authHeader,
+  });
+  console.log("Status:", res.statusCode);
+  console.log("Body:", JSON.stringify(res.body, null, 2));
+
+  const beatenScenario = "cafe_intro";
+
+  console.log("\n[GAME] POST /api/scenarios/unlock");
+  res = await gameRequest({
+    method: "POST",
+    path: "/api/scenarios/unlock",
+    headers: authHeader,
+    body: {
+      user_id: String(userId),
+      beaten_scenario: beatenScenario,
+    },
+  });
+  console.log("Status:", res.statusCode);
+  console.log("Body:", JSON.stringify(res.body, null, 2));
+
+  console.log("\n[GAME] GET /api/scenarios/unlocks/:userId (after unlock)");
+  res = await gameRequest({
+    method: "GET",
+    path: `/api/scenarios/unlocks/${userId}`,
+    headers: authHeader,
   });
   console.log("Status:", res.statusCode);
   console.log("Body:", JSON.stringify(res.body, null, 2));
@@ -283,10 +433,9 @@ async function testChallenges(token, userId) {
     console.log("\n[GAME] POST /api/challenges/:sessionId/pre-turn");
     res = await gameRequest({
       method: "POST",
-      path: `/api/challenges/${sessionId}/pre-turn?support_card_id=${encodeURIComponent(
-        supportCardId,
-      )}`,
+      path: `/api/challenges/${sessionId}/pre-turn`,
       headers: authHeader,
+      body: { support_card_id: supportCardId },
     });
     console.log("Status:", res.statusCode);
     console.log("Body:", JSON.stringify(res.body, null, 2));
@@ -333,6 +482,12 @@ async function testChallenges(token, userId) {
 async function run() {
   try {
     console.log("--- Microservice end-to-end test via game-backend ---");
+    console.log(
+      `Mode: ${USE_TRAEFIK ? "Traefik (HTTPS)" : "Direct (localhost ports)"}`,
+    );
+    console.log(
+      `Auth → ${AUTH_HOST}:${AUTH_PORT}, Game → ${GAME_HOST}:${GAME_PORT}`,
+    );
 
     // 1) Get JWT from auth backend
     const { newUser, credentials } = await registerUserViaAuth();
@@ -354,7 +509,10 @@ async function run() {
     // 5) Card endpoints (card-service router)
     await testCards(token, userId);
 
-    // 6) Challenge endpoints (challenges router)
+    // 6) Scenario endpoints (scenario router)
+    await testScenarios(token, userId);
+
+    // 7) Challenge endpoints (challenges router)
     await testChallenges(token, userId);
 
     console.log("--- Test run finished ---");

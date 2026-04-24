@@ -1,7 +1,7 @@
 const express = require("express");
 
 const { openPack, getCollection, getCollectionByScenario, addXp, getBattleDeck } = require("./controllers/cardController");
-const { startChallenge, challengeAction, getChallenge, preTurn, getHand } = require("./controllers/challengeController");
+const { startChallenge, challengeAction, getChallenge, preTurn, getHand, getScenarios } = require("./controllers/challengeController");
 const { requireAuth } = require("./middleware/auth");
 const { generateQuest, submitQuest, generateInternalQuest } = require("./controllers/questController");
 const { questHealth, questSeed, questContent, cardHealth, challengeHealth } = require("./controllers/adminController");
@@ -21,6 +21,7 @@ router.get("/scenarios/unlocks/:userId", requireAuth, getUnlocks);
 router.post("/scenarios/unlock", requireAuth, unlockScenario);
 
 // Challenges
+router.get("/challenges/scenarios", getScenarios);
 router.post("/challenges/start", requireAuth, startChallenge);
 router.post("/challenges/:sessionId/action", requireAuth, challengeAction);
 router.get("/challenges/:sessionId", requireAuth, getChallenge);
@@ -49,5 +50,6 @@ router.post("/admin/quest/seed", requireAuth, questSeed);
 router.get("/admin/quest/content", requireAuth, questContent);
 router.get("/admin/card/health", cardHealth);
 router.get("/admin/challenge/health", challengeHealth);
+
 
 module.exports = router;

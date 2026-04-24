@@ -119,4 +119,17 @@ async function getHand(req, res) {
   }
 }
 
-module.exports = { startChallenge, challengeAction, getChallenge, preTurn, getHand };
+// GET /api/challenges/scenarios
+async function getScenarios(_req, res) {
+  try {
+    const { data } = await challengeClient.get("/challenges/scenarios");
+    return res.status(200).json(new Response(true, 200, "Scenarios fetched", data));
+  } catch (err) {
+    console.error("getScenarios error:", err.message);
+    const status = err.response?.status || 500;
+    const detail = err.response?.data?.detail || "Failed to fetch scenarios";
+    return res.status(status).json(new Response(false, status, detail, null));
+  }
+}
+
+module.exports = { startChallenge, challengeAction, getChallenge, preTurn, getHand, getScenarios };

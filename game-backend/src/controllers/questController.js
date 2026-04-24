@@ -7,10 +7,13 @@ async function generateQuest(req, res) {
     const { data } = await questClient.post("/quests/generate", req.body);
     return res.status(201).json(new Response(true, 201, "Quest generated", data));
   } catch (err) {
-    console.error("generateQuest error:", err.message);
-    const status = err.response?.status || 500;
-    const detail = err.response?.data?.detail || "Failed to generate quest";
-    return res.status(status).json(new Response(false, status, detail, null));
+      console.error("generateQuest error:", err.message);
+      const status = err.response?.status || 500;
+      const detail =
+          err.response?.data?.detail ||
+          err.response?.data?.message ||
+          `Quest service unreachable: ${err.code || err.message}`;
+          return res.status(status).json(new Response(false, status, detail, null));
   }
 }
 

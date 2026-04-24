@@ -26,44 +26,25 @@ export function normalizeQuest(questData) {
 
 export async function generateQuest({ scenarioTag, difficultyTarget } = {}) {
   const user = getCurrentUser();
+  if (!user?.id) throw new Error("You need to be logged in to play quests.");
 
-  if (!user?.id) {
-    throw new Error("You need to be logged in to play quests.");
-  }
-
-  const payload = {
-    user_id: String(user.id),
-  };
-
-  if (scenarioTag) {
-    payload.scenario_tag = scenarioTag;
-  }
-
-  if (typeof difficultyTarget === "number") {
-    payload.difficulty_target = difficultyTarget;
-  }
+  const payload = { user_id: String(user.id) };
+  if (scenarioTag) payload.scenario_tag = scenarioTag;
+  if (typeof difficultyTarget === "number") payload.difficulty_target = difficultyTarget;
 
   try {
     const res = await api.post("/quests/generate", payload);
-
     return normalizeQuest(res.data?.data);
   } catch (err) {
     console.log("❌ FULL ERROR:", err.response?.data);
-    console.log("❌ REAL MESSAGE:", err.response?.data?.message?.[0]); // 👈 THIS
     throw err;
   }
 }
 
 export async function submitQuest({ questId, givenAnswer, currentStreak = 0 }) {
   const user = getCurrentUser();
-
-  if (!user?.id) {
-    throw new Error("You need to be logged in to submit quests.");
-  }
-
-  if (!questId) {
-    throw new Error("Missing quest id.");
-  }
+  if (!user?.id) throw new Error("You need to be logged in to submit quests.");
+  if (!questId) throw new Error("Missing quest id.");
 
   const res = await api.post("/quests/submit", {
     user_id: String(user.id),
@@ -75,36 +56,9 @@ export async function submitQuest({ questId, givenAnswer, currentStreak = 0 }) {
   return res.data?.data ?? res.data;
 }
 
-export async function openPack({ scenarioBias = null } = {}) {
-  const user = getCurrentUser();
-
-  if (!user?.id) {
-    throw new Error("You need to be logged in to open a pack.");
-  }
-
-  const payload = {
-    user_id: String(user.id),
-  };
-
-  if (scenarioBias) {
-    payload.scenario_bias = scenarioBias;
-  }
-
-  try {
-    const res = await api.post("/cards/open-pack", payload);
-    return res.data?.data ?? res.data;
-  } catch (err) {
-    console.error("Error opening pack:", err);
-    throw err;
-  }
-}
-
 export async function getQuestChallenges() {
   const user = getCurrentUser();
-
-  if (!user?.id) {
-    throw new Error("You need to be logged in to view quest challenges.");
-  }
+  if (!user?.id) throw new Error("You need to be logged in to view quest challenges.");
 
   const res = await api.get(`/quests/challenges/${String(user.id)}`);
   return res.data?.data ?? res.data;

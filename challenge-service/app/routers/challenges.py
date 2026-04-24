@@ -9,6 +9,9 @@ POST /challenges/{id}/action
   Submit answer for the current turn. Returns updated battle state.
   correct_words_this_turn in the response tells game-backend which card to give XP.
 
+GET /challenges/scenarios
+  List available scenarios for starting a challenge. Client can use this to populate scenario select UI.
+
 GET  /challenges/{id}
 GET  /challenges/{id}/hand
 POST /challenges/{id}/pre-turn  (no-op — card effects are a future feature)
@@ -28,6 +31,7 @@ from app.schemas.challenge import (
     QuestionOut,
 )
 from app.services import session_store, battle_engine
+from app.services.content_rules import SCENARIO_INFO, Scenario
 
 router = APIRouter(prefix="/challenges", tags=["challenges"])
 
@@ -193,6 +197,19 @@ async def challenge_action(
 
     next_q = await session_store.get_next_question(db, session)
     return _session_out(session, next_q=next_q, last_action=last_action, correct_words=correct_words)
+
+
+@router.get("/scenarios")
+async def get_scenarios():
+    return [
+        {
+            "value": value,
+            "label": data["name"],
+            "description": data["description"],
+        }
+        for value, data in SCENARIO_INFO.items()
+        if value != Scenario.GENERAL
+    ]
 
 
 @router.get("/{session_id}", response_model=ChallengeStateOut)

@@ -3,12 +3,16 @@ question_engine.py — generates battle questions from deck cards using LLM.
 
 Each card in the player's deck gets one question.
 The LLM generates a Finnish fill-in-the-blank sentence where the card's word is the blank.
-Now supports valid_answers — multiple deck words can be correct for the same blank.
+Supports valid_answers — multiple deck words can be correct for the same blank.
+
+FIXED: fallback now uses other deck words as distractors instead of hardcoded
+"apua", "lisää", "muuta" which were appearing across all scenarios.
 """
 
 import asyncio
 import json
 import logging
+import random
 import uuid as _uuid
 
 from app.models.challenge_question import ChallengeQuestion
@@ -35,6 +39,7 @@ RULES:
 4. In "valid_answers" include ALL deck words (from the list above) that would
    grammatically AND semantically work in the blank — be generous with synonyms
 5. Make the sentence specific enough that NOT every word works
+6. Distractors MUST be from the same scenario/context as the target word
 
 Return ONLY this JSON (no markdown):
 {{
@@ -43,9 +48,9 @@ Return ONLY this JSON (no markdown):
   "target_fi": "{word}",
   "target_en": "English meaning of {word}",
   "valid_answers": ["{word}"],
-  "distractor_1_fi": "wrong Finnish word (same word class)",
-  "distractor_2_fi": "wrong Finnish word 2",
-  "distractor_3_fi": "wrong Finnish word 3"
+  "distractor_1_fi": "wrong Finnish word (same scenario, same word class)",
+  "distractor_2_fi": "wrong Finnish word 2 (same scenario)",
+  "distractor_3_fi": "wrong Finnish word 3 (same scenario)"
 }}"""
 
 
@@ -91,7 +96,8 @@ async def generate_for_deck(
     for i, result in enumerate(results):
         if isinstance(result, Exception):
             logger.warning(f"LLM failed for card {deck[i].get('word_fi')}: {result}")
-            questions.append(_fallback(deck[i], scenario))
+            # Pass all_words so fallback can pick real deck words as distractors
+            questions.append(_fallback(deck[i], scenario, all_words))
         else:
             questions.append(result)
 
@@ -160,15 +166,38 @@ def _parse_raw(raw: dict, card: dict, difficulty: float) -> GeneratedQuestion:
     )
 
 
-def _fallback(card: dict, scenario: str) -> GeneratedQuestion:
+def _fallback(card: dict, scenario: str, all_words: list[str] | None = None) -> GeneratedQuestion:
+    """
+    Fallback question when LLM is unavailable.
+
+    Uses OTHER DECK WORDS as distractors — never hardcoded generic words.
+    This ensures distractors are always relevant to the same scenario.
+    """
     word_fi = card.get("word_fi", "sana")
     word_en = card.get("word_en", "word")
+
+    # Build distractors from other deck words — always scenario-relevant
+    other_words = [w for w in (all_words or []) if w and w != word_fi]
+    random.shuffle(other_words)
+    distractors = other_words[:3]
+
+    # Pad if we somehow have fewer than 3 other words
+    # Use plausible Finnish filler only as absolute last resort
+    padding = ["tarvitaan", "käytetään", "löytyy"]
+    while len(distractors) < 3:
+        p = padding.pop(0) if padding else "sana"
+        if p != word_fi and p not in distractors:
+            distractors.append(p)
+
     sentence_fi = f"Tarvitsen {word_fi} tähän tilanteeseen."
-    question_fi = f"Tarvitsen .... tähän tilanteeseen."
+    options = [word_fi] + distractors[:3]
+    # Shuffle so correct answer isn't always first
+    random.shuffle(options)
+
     return GeneratedQuestion(
-        question_fi    = question_fi,
+        question_fi    = f"Tarvitsen .... tähän tilanteeseen.",
         question_en    = f"I need {word_en} for this situation.",
-        options        = [word_fi, "apua", "lisää", "muuta"],
+        options        = options,
         correct_answer = word_fi.lower(),
         valid_answers  = [word_fi.lower()],
         difficulty     = 0.2,

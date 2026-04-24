@@ -1,0 +1,101 @@
+services:
+  frontend:
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=Host(`app.localhost`)"
+      - "traefik.http.routers.frontend.entrypoints=websecure"
+      - "traefik.http.routers.frontend.tls=true"
+      - "traefik.http.services.frontend.loadbalancer.server.port=80"
+
+      # Optional plain HTTP router (no TLS)
+      - "traefik.http.routers.frontend-http.rule=Host(`app.localhost`)"
+      - "traefik.http.routers.frontend-http.entrypoints=web"
+      - "traefik.http.routers.frontend-http.service=frontend"
+  traefik:
+    image: traefik:v3.6.10
+    command:
+      - "--configFile=/app/configs/traefik.toml"
+    volumes:
+      - ./traefik/traefik.toml:/app/configs/traefik.toml:ro
+      - ./traefik/dynamic-tls.toml:/app/configs/dynamic-tls.toml:ro
+      - ./traefik/certs:/certs:ro
+      - /var/run/docker.sock:/var/run/docker.sock:rw
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.localhost`)"
+      - "traefik.http.routers.traefik.entrypoints=websecure"
+      - "traefik.http.routers.traefik.tls=true"
+      - "traefik.http.routers.traefik.service=api@internal"
+    environment:
+      - TZ=Europe/Helsinki
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+      - "8082:8082"   # Traefik API/dashboard + Prometheus metrics endpoint
+    networks:
+      - lingo-net
+
+  # Only labels here – service definitions come from docker-compose.yml
+  game-backend:
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.game.rule=Host(`api.localhost`)"
+      - "traefik.http.routers.game.entrypoints=websecure"
+      - "traefik.http.routers.game.tls=true"
+      - "traefik.http.services.game.loadbalancer.server.port=4000"
+
+  backend:
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.auth.rule=Host(`auth.localhost`)"
+      - "traefik.http.routers.auth.entrypoints=websecure"
+      - "traefik.http.routers.auth.tls=true"
+      - "traefik.http.services.auth.loadbalancer.server.port=3000"
+
+  quest-service:
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.quest.rule=Host(`quest.localhost`)"
+      - "traefik.http.routers.quest.entrypoints=websecure"
+      - "traefik.http.routers.quest.tls=true"
+      - "traefik.http.services.quest.loadbalancer.server.port=8001"
+
+  card-service:
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.card.rule=Host(`card.localhost`)"
+      - "traefik.http.routers.card.entrypoints=websecure"
+      - "traefik.http.routers.card.tls=true"
+      - "traefik.http.services.card.loadbalancer.server.port=8002"
+
+  challenge-service:
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.challenge.rule=Host(`challenge.localhost`)"
+      - "traefik.http.routers.challenge.entrypoints=websecure"
+      - "traefik.http.routers.challenge.tls=true"
+      - "traefik.http.services.challenge.loadbalancer.server.port=8003"
+
+  # ── Grafana — routed via Traefik at grafana.localhost ─────────────────────────
+  grafana:
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.grafana.rule=Host(`grafana.localhost`)"
+      - "traefik.http.routers.grafana.entrypoints=websecure"
+      - "traefik.http.routers.grafana.tls=true"
+      - "traefik.http.services.grafana.loadbalancer.server.port=3000"
+
+  # ── Prometheus — routed via Traefik at prometheus.localhost ──────────────────
+  prometheus:
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.prometheus.rule=Host(`prometheus.localhost`)"
+      - "traefik.http.routers.prometheus.entrypoints=websecure"
+      - "traefik.http.routers.prometheus.tls=true"
+      - "traefik.http.services.prometheus.loadbalancer.server.port=9090"
+
+networks:
+  lingo-net:
+    name: lingo-net
+    driver: bridge
