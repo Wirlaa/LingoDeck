@@ -33,8 +33,8 @@ router.post("/quests/generate", requireAuth, generateQuest);
 router.post("/quests/generate-internal", requireAuth, generateInternalQuest);
 router.post("/quests/submit", requireAuth, submitQuest);
 router.get("/quests/challenges/:userId", requireAuth, async (req, res) => {
-  const { questClient } = require("../../microserviceClient");
-  const Response = require("../utilities/response");
+  const { questClient } = require("./../microserviceClient");
+  const Response = require("./utilities/response");
   try {
     const { data } = await questClient.get(`/quests/challenges/${req.params.userId}`);
     return res.status(200).json(new Response(true, 200, "Challenges fetched", data));

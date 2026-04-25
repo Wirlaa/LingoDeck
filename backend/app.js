@@ -4,7 +4,7 @@ const config = require('./src/config/config');
 const routes = require('./src/routes/routes');
 const { routeCors } = require('./src/middleware/cors');
 const swaggerUi = require('swagger-ui-express');
-const openapiDoc = require('./docs/openapi.json');
+const openapiDoc = require('./src/docs/openapi.json');
 
 const app = express();
 
