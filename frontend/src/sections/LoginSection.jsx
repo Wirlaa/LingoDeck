@@ -87,6 +87,8 @@ const LoginSection = () => {
                 value={formData.password}
                 onChange={handleChange}
                 type="password"
+                minLength={6}
+                title="Password must be at least 6 characters long"
                 placeholder="enter password"
                 className="flex-1 bg-[#fffaf2] border-2 border-[#e6cfae] rounded-full px-4 py-2 outline-none"
               />

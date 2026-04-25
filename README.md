@@ -1,6 +1,7 @@
 # LingoDeck
 
 A web-based language learning platform based on a collectible card game. 
+Use docker compose -f docker-compose.yml -f docker-compose-with-traefik.yml up -d --build to build.
 
 ## Tasks
 
