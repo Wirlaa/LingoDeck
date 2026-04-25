@@ -27,4 +27,4 @@ RUN useradd -m -d /usr/src/app appuser && \
     chown -R appuser:appuser /usr/src/app
 USER appuser
 
-CMD ["uv", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8002"]
+CMD ["uv", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8001"]
