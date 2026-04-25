@@ -105,6 +105,8 @@ const RegisterSection = () => {
                   value={formData.password}
                   onChange={handleChange}
                   type="password"
+                  minLength={6}
+                  title="Password must be at least 6 characters long"
                   placeholder="enter password"
                   className="flex-1 bg-white border-2 border-[#cfe7e2] rounded-full px-4 py-2 text-sm outline-none"
                 />
@@ -119,6 +121,8 @@ const RegisterSection = () => {
                   value={formData.repeatPassword}
                   onChange={handleChange}
                   type="password"
+                  minLength={6}
+                  title="Password must be at least 6 characters long"
                   placeholder="repeat password"
                   className="flex-1 bg-white border-2 border-[#cfe7e2] rounded-full px-4 py-2 text-sm outline-none"
                 />

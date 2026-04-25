@@ -39,8 +39,11 @@ async function getUser(req, res) {
 // Path: POST /api/users
 async function createUser(req, res) {
   const { username, email, password } = req.body || {};
+  const normalizedPassword = String(password || "");
+  const normalizedEmail = String(email || '').trim().toLowerCase();
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[A-Za-z]{2,}$/; // Pattern check for email
 
-  if (!username || !email || !password) {
+  if (!username || !normalizedEmail || !normalizedPassword) {
     return res
       .status(400)
       .json(
@@ -53,11 +56,23 @@ async function createUser(req, res) {
       );
   }
 
+  if (!emailPattern.test(normalizedEmail)) {
+    return res
+      .status(400)
+      .json(new Response(false, 400, 'Invalid email format', null));
+  }
+
+  if (normalizedPassword.length < 6) {
+    return res
+      .status(400)
+      .json(new Response(false, 400, 'Password must be at least 6 characters long', null));
+  }
+
   try {
     const newUser = await createUserModel(
       username,
-      email,
-      password,
+      normalizedEmail,
+      normalizedPassword,
     
     );
 
@@ -84,16 +99,31 @@ async function createUser(req, res) {
 // Path: POST /api/login
 async function login(req,res) {
   const {email, password} = req.body || {};
+  const normalizedEmail = String(email || '').trim().toLowerCase();
+  const normalizedPassword = String(password || '');
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[A-Za-z]{2,}$/;
 
-  if (!email || !password)
+  if (!normalizedEmail || !normalizedPassword)
     return res
       .status(400)
       .json(
         new Response(false, 400, 'Email and Password are required fields', null)
       );
   
+  if (!emailPattern.test(normalizedEmail)) {
+    return res
+      .status(400)
+      .json(new Response(false, 400, 'Invalid email format', null));
+  }
+
+  if (normalizedPassword.length < 6) {
+    return res
+      .status(400)
+      .json(new Response(false, 400, 'Password must be at least 6 characters long', null));
+  }
+  
   try {
-    const user = await getUserByEmail(email);
+    const user = await getUserByEmail(normalizedEmail);
 
     if (!user) {
       return res
@@ -102,7 +132,7 @@ async function login(req,res) {
           new Response(false, 401, 'User not found', null)
         );
     }
-    const passwordOk = await comparePassword(password, user.password_hash);
+    const passwordOk = await comparePassword(normalizedPassword, user.password_hash);
     if (!passwordOk) {
       return res
         .status(401)
