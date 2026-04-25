@@ -35,6 +35,9 @@ jobs:
           # Get branch name, replace '/' and '_' with '-', and convert to lowercase
           SANITIZED_BRANCH=$(echo "${GITHUB_REF#refs/heads/}" | tr '/_' '-' | tr '[:upper:]' '[:lower:]')
           echo "BRANCH_NAME=$SANITIZED_BRANCH" >> $GITHUB_ENV
+          
+          SANITIZED_BRANCH=$(echo "${GITHUB_REF#refs/heads/}" | tr '/_@' '-' | tr '[:upper:]' '[:lower:]')
+          echo "BRANCH_NAME=$SANITIZED_BRANCH" >> $GITHUB_ENV
 
       - name: Build Docker Image
         run: |
