@@ -40,7 +40,7 @@ jobs:
         run: |
           docker build -f card-service/prod.Dockerfile \
             -t ghcr.io/${{ env.REPO_OWNER }}/lingo-card-service:${{ env.BRANCH_NAME }} \
-            card-service/
+            .
 
       - name: Push Docker Image to GHCR
         run: |

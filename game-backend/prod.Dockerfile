@@ -8,6 +8,7 @@ RUN npm ci
 
 # Copy source
 COPY app.js ./app.js
+COPY microserviceClient.js ./microserviceClient.js
 COPY src ./src
 
 # Bundle your application into dist/app.js

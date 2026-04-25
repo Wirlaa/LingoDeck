@@ -40,7 +40,7 @@ jobs:
         run: |
           docker build -f quest-service/prod.Dockerfile \
             -t ghcr.io/${{ env.REPO_OWNER }}/lingo-quest-service:${{ env.BRANCH_NAME }} \
-            quest-service/
+            .
 
       - name: Push Docker Image to GHCR
         run: |
