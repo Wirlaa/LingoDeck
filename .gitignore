@@ -11,3 +11,4 @@ traefik/certs/
 traefik/.pem
 traefik/-key.pem
 *.pem
+.idea/
