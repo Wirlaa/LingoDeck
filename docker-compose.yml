@@ -243,9 +243,9 @@ services:
 
 volumes:
   db-data:
+  backend-db-data:
   prometheus-data:
   loki-data:
-  backend-db-data:
   grafana-data:
 
 networks:

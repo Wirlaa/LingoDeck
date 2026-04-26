@@ -1,0 +1,34 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+
+  - job_name: 'traefik'
+    static_configs:
+      - targets: ['traefik_traefik:8082']
+
+  - job_name: 'backend'
+    static_configs:
+      - targets: ['auth:3000']
+    metrics_path: '/metrics'
+
+  - job_name: 'game-backend'
+    static_configs:
+      - targets: ['game:4000']
+    metrics_path: '/metrics'
+
+  - job_name: 'quest-service'
+    static_configs:
+      - targets: ['quest:8001']
+    metrics_path: '/metrics'
+
+  - job_name: 'card-service'
+    static_configs:
+      - targets: ['card:8002']
+    metrics_path: '/metrics'
+
+  - job_name: 'challenge-service'
+    static_configs:
+      - targets: ['challenge:8003']
+    metrics_path: '/metrics'
