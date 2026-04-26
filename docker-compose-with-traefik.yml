@@ -34,13 +34,7 @@ services:
       - "8080:8080"
       - "8082:8082"   # Traefik API/dashboard + Prometheus metrics endpoint
     networks:
-      lingo-net:
-        aliases: # Traefik can resolve these hostnames to route to the correct services
-          - api.localhost
-          - auth.localhost
-          - quest.localhost
-          - card.localhost
-          - challenge.localhost
+      - lingo-net
 
   # Only labels here – service definitions come from docker-compose.yml
   game-backend:
@@ -50,9 +44,6 @@ services:
       - "traefik.http.routers.game.entrypoints=websecure"
       - "traefik.http.routers.game.tls=true"
       - "traefik.http.services.game.loadbalancer.server.port=4000"
-      - "traefik.http.routers.game-http.rule=Host(`api.localhost`)"
-      - "traefik.http.routers.game-http.entrypoints=web"
-      - "traefik.http.routers.game-http.service=game"
 
   backend:
     labels:
@@ -61,9 +52,6 @@ services:
       - "traefik.http.routers.auth.entrypoints=websecure"
       - "traefik.http.routers.auth.tls=true"
       - "traefik.http.services.auth.loadbalancer.server.port=3000"
-      - "traefik.http.routers.auth-http.rule=Host(`auth.localhost`)"
-      - "traefik.http.routers.auth-http.entrypoints=web"
-      - "traefik.http.routers.auth-http.service=auth"
 
   quest-service:
     labels:
@@ -72,9 +60,6 @@ services:
       - "traefik.http.routers.quest.entrypoints=websecure"
       - "traefik.http.routers.quest.tls=true"
       - "traefik.http.services.quest.loadbalancer.server.port=8001"
-      - "traefik.http.routers.quest-http.rule=Host(`quest.localhost`)"
-      - "traefik.http.routers.quest-http.entrypoints=web"
-      - "traefik.http.routers.quest-http.service=quest"
 
   card-service:
     labels:
@@ -83,9 +68,6 @@ services:
       - "traefik.http.routers.card.entrypoints=websecure"
       - "traefik.http.routers.card.tls=true"
       - "traefik.http.services.card.loadbalancer.server.port=8002"
-      - "traefik.http.routers.card-http.rule=Host(`card.localhost`)"
-      - "traefik.http.routers.card-http.entrypoints=web"
-      - "traefik.http.routers.card-http.service=card"
 
   challenge-service:
     labels:
@@ -94,9 +76,6 @@ services:
       - "traefik.http.routers.challenge.entrypoints=websecure"
       - "traefik.http.routers.challenge.tls=true"
       - "traefik.http.services.challenge.loadbalancer.server.port=8003"
-      - "traefik.http.routers.challenge-http.rule=Host(`challenge.localhost`)"
-      - "traefik.http.routers.challenge-http.entrypoints=web"
-      - "traefik.http.routers.challenge-http.service=challenge"
 
   # ── Grafana — routed via Traefik at grafana.localhost ─────────────────────────
   grafana:
