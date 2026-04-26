@@ -72,7 +72,8 @@ services:
       - .env
     environment:
       DATABASE_URL: postgresql+asyncpg://lingo:${DB_PASSWORD:-lingo}@db:5432/lingo_db
-      QUEST_SERVICE_URL: http://quest-service:8001
+      QUEST_SERVICE_URL: http://quest.localhost
+      CARD_SERVICE_URL: http://card.localhost
     depends_on:
       db:
         condition: service_healthy
@@ -93,7 +94,7 @@ services:
     env_file:
       - ./game-backend/.env.docker
     environment:
-      AUTH_SERVICE_URL: http://backend:3000/api
+      AUTH_SERVICE_URL: http://auth.localhost/api
     ports:
       - "4000:4000"
     depends_on:

@@ -24,4 +24,4 @@ mkdir traefik/certs
 mkcert -cert-file traefik/certs/lingodeck-local.pem -key-file traefik/certs/lingodeck-local-key.pem localhost 127.0.0.1 ::1 app.localhost api.localhost auth.localhost quest.localhost card.localhost challenge.localhost grafana.localhost prometheus.localhost traefik.localhost
 
 This does not work for firefox since it uses its own system, but for other Chromium based
-browsers the certificate error should disappear.
+browsers the certificate error should disappear. Should be different in deployment.
