@@ -72,8 +72,7 @@ services:
       - .env
     environment:
       DATABASE_URL: postgresql+asyncpg://lingo:${DB_PASSWORD:-lingo}@db:5432/lingo_db
-      QUEST_SERVICE_URL: http://quest.localhost
-      CARD_SERVICE_URL: http://card.localhost
+      QUEST_SERVICE_URL: http://quest-service:8001
     depends_on:
       db:
         condition: service_healthy
@@ -94,7 +93,7 @@ services:
     env_file:
       - ./game-backend/.env.docker
     environment:
-      AUTH_SERVICE_URL: http://auth.localhost/api
+      AUTH_SERVICE_URL: http://backend:3000/api
     ports:
       - "4000:4000"
     depends_on:
@@ -142,7 +141,7 @@ services:
       - "5434:5432" # backend/.env expects DB_PORT=5434, DB_HOST=localhost
     volumes:
       - ./backend/database/init.sql:/docker-entrypoint-initdb.d/init.sql
-      - ./backend/db_data:/var/lib/postgresql/data
+      - backend-db-data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U user -d projectdb"]
       interval: 10s
@@ -246,6 +245,7 @@ volumes:
   db-data:
   prometheus-data:
   loki-data:
+  backend-db-data:
   grafana-data:
 
 networks:

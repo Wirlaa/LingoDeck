@@ -3,8 +3,6 @@ const client = require('prom-client');
 const config = require('./src/config/config');
 const routes = require('./src/routes/routes');
 const { routeCors } = require('./src/middleware/cors');
-const swaggerUi = require('swagger-ui-express');
-const openapiDoc = require('./src/docs/openapi.json');
 
 const app = express();
 
@@ -17,13 +15,6 @@ collectDefaultMetrics({ prefix: "auth_backend_" });
 app.use(express.json());
 // Use CORS globally
 app.use(routeCors);
-
-// Swagger UI
-app.use('/docs', swaggerUi.serve, swaggerUi.setup(openapiDoc));
-app.get('/docs.json', (_req, res) => res.json(openapiDoc));
-app.get('/', (_req, res) => {
-  res.redirect('/docs');
-});
 
 const port = config.port;
 
