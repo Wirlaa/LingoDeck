@@ -26,8 +26,8 @@ class Settings(BaseSettings):
     SERVICE_SECRET: str = "changeme"
 
     # URLs for inter-service calls
-    QUEST_SERVICE_URL:  str = "http://quest-service:8001"
-    CARD_SERVICE_URL:   str = "http://card-service:8002"
+    QUEST_SERVICE_URL:  str = "http://my-stack_quest:8001"
+    CARD_SERVICE_URL:   str = "http://my-stack_card:8002"
     QUEST_SERVICE_SECRET: str = "changeme"
 
     # LLM config (for KELA boss question generation)
